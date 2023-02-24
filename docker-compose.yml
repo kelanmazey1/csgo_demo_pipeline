@@ -8,6 +8,7 @@ services:
     restart: always
     volumes:
       - demo-parser-data:/var/lib/postgres/data
+      - ./init.sql:/docker-entrypoint-initdb.d/
   adminer:
     image: adminer
     restart: always
