@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from types import List
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
   # TODO: Save data: HLTV_match_URL, HLTV_match_id, team_a, team_b, competition, demo_available, date
 
 
-def get_urls(**kwargs):
+def get_urls(**kwargs) -> List[str]:
   offset = kwargs.get("offset", 0)
 
   results_page = requests.get(
