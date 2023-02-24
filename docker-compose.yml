@@ -2,6 +2,16 @@ version: "2.15"
 services:
   get_demos:
     build: ./get_demos
+    depends_on: [db]
+  db:
+    build: postgres:14.3
+    restart: always
+    volumes:
+      - demo-parser-data:/var/lib/postgres/data
+  adminer:
+    image: adminer
+    restart: always
     ports:
-      - 5000:5000
-    
+      - 8080:8080
+volumes:
+  demo-parser-data:
