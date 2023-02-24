@@ -12,12 +12,17 @@ def main():
       "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
       "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
     })
-  print(type(results_page.text))
+  html = BeautifulSoup(results_page.text, 'html.parser')
   
+  # Pull match link from html
+  for a in html.find_all("a", class_="a-reset", recursive=True):
+    print(a.find("a", {"class": "a-reset"}))
+
+  # print(f"This is results: {results}")
+
   # TODO: Get list of HLTV match IDs + team names + competition
   # TODO: 
 
-  # TODO: Create URL to scrape for each match
 
   # TODO: Check URL to see if demo
 
