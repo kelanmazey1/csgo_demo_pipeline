@@ -1,7 +1,0 @@
-version: "2.15"
-services:
-  get_demos:
-    build: ./get_demos
-    ports:
-      - 5000:5000
-    
