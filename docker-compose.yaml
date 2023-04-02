@@ -9,18 +9,27 @@ services:
     image: postgres
     secrets:
         - db_password
-        # - db_user
+        - db_user
+        - db_default
     environment:
+      # NOTE: password file must go before user otherwise will think both are defined in password file
+      POSTGRES_USER_FILE: /run/secrets/db_user
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-      # POSTGRES_USER: /run/secrets/db_user
-      # # POSTGRES_DB: db
+      POSTGRES_DB_FILE: /run/secrets/db_default
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/initdb.sql
+      - csgo_demo_data:/var/lib/postgresql/data
   adminer:
     image: adminer
     ports:
       - 8080:8080
+volumes:
+  csgo_demo_data:
 secrets:
   db_password:
     file: ./secrets/db_password.txt
-  # db_user:
-  #   file: ./secrets/db_user.txt
+  db_user:
+    file: ./secrets/db_user.txt
+  db_default:
+    file: ./secrets/db_default.txt
   
