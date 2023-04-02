@@ -4,18 +4,30 @@ from bs4 import BeautifulSoup
 
 
 def main(args):
-  # Get match URLS
-  match_urls = get_match_urls(args)
+  offset = int(args.offset)
+  # Generate list of offset values, 0 always included as this is the final results page
+  offset_values = [0]
+  while offset > 0:
+    offset_values.append(offset)
+    # Use 100 as this is equivalent to going to the next page on hltv
+    offset -= 100
 
+  # Get match URLS, ~100 matches per page offset decreases by 100 until most recent page ie. offset=100
+  match_urls = []
+  for offset in offset_values:
+    match_urls += (get_match_urls(offset=offset))
+
+  # remove duplicate matches
+  match_urls = list(set(match_urls))
+  print(match_urls)
   # TODO: Check URL to see if demo
   check_demos = get_demo_urls(match_urls)
 
   # TODO: Save data: HLTV_match_URL, HLTV_match_id, team_a, team_b, competition, demo_url, date
   # load_data_to_db()
 
-def get_match_urls(args) -> list[str]:
+def get_match_urls(offset) -> list[str]:
   # Get HTML doc for beautiful soup
-  offset = args.offset
   results_page = requests.get(
     url=f"https://www.hltv.org/results?offset={offset}",
     headers={
@@ -24,21 +36,14 @@ def get_match_urls(args) -> list[str]:
     })
   
   hltv_results = BeautifulSoup(results_page.text, 'html.parser')
-  raw_results =[]
+  results = []
 
   # Pull match link from html
   for a in hltv_results.find_all("a", class_="a-reset"):
     link = str(a.get("href"))
     
     if link.startswith("/matches/"):
-      raw_results.append(link)
-  
-  # This is to remove any duplicates added from the 'Featured results' pane on most recent matches
-  # NOTE: I tried to use bs4 to search for the results-all class but couldn't get it to return  
-  results = []
-  for match in raw_results:
-    if match not in results:
-      results.append(match)
+      results.append(link)
 
   return results
 
