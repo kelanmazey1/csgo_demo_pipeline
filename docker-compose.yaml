@@ -3,8 +3,8 @@ services:
   get_demos:
     image: csgo_demos_get_demos
     build: ./get_demos
-    ports:
-      - 5000:5000
+    depends_on:
+      [db]
   db:
     image: postgres
     secrets:
