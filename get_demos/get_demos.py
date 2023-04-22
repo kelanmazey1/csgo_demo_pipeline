@@ -99,6 +99,7 @@ def get_match_details(match_urls: List[str]) -> List[Dict[int, Dict[str, str]]]:
     'date': date_time,
     'demo_id': demo_link,
   }
+  print(data_dict)
   return data_dict
 
 def load_data_to_db(data: Dict[int, Dict[str, str]], **kwargs):
