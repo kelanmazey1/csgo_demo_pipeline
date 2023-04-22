@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM python:3.9.9-slim-buster
 
 ENV PYTHONUNBUFFERED=1
 
@@ -15,14 +15,10 @@ ENV PATH="${PATH}:/usr/local/go/bin"
 # Remove tar after install
 RUN rm -rf /setup
 
-# Install python and packages
-RUN apt-get install -y software-properties-common gcc && \
-    add-apt-repository -y ppa:deadsnakes/ppa
+RUN pip3 install --no-cache --upgrade pip setuptools
 
-RUN apt-get update && apt-get install -y python3.10 python3-distutils python3-pip python3-apt
+COPY requirements.txt ./
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-WORKDIR /reqs
-COPY requirments.txt /reqs/requirements.txt
-RUN pip3 install -r requirements.txt
-
+WORKDIR /
 ENTRYPOINT [ "bash" ]

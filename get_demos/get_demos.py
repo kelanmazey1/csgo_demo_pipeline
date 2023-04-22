@@ -4,6 +4,8 @@ import argparse
 from datetime import datetime
 from bs4 import BeautifulSoup
 import pandas as pd 
+import pyarrow as pa
+import pyarrow.parquet as pq
 from typing import Dict, List, Tuple
 import undetected_chromedriver as uc
 
@@ -36,14 +38,15 @@ def main(args):
 
   # Go to match page and parse data
   data_to_load = get_match_details(match_urls)
-
-  # TODO: Save data: HLTV_match_URL, HLTV_match_id, team_a, team_b, competition, demo_url, date
-  load_data_to_db(data_to_load)
+  # data_to_load = [{'match_id': 2363184, 'url': '/matches/2363184/astralis-vs-spirit-blasttv-paris-major-2023-europe-rmr-b', 'team_a': 'Astralis', 'team_b': 'Spirit', 'team_a_score': 2, 'team_b_score': 1, 'competition': 'BLAST.tv Paris Major 2023 Europe RMR B', 'date': '2023-04-12T10:50:00Z', 'demo_id': 79088}]
+  # TODO: Save data dict as parquet to dir, this will be S3 bucket in cloud, local folder otherwise
+  parquet_dump(data_to_load)
   
   driver.close()
 
 def get_match_urls(offset: int) -> List[str]:
   # Get HTML doc for beautiful soup
+  # Uses requests instead of chrome driver for sake of speed
   results_page = requests.get(f'{HLTV_ADDR}/results?offset={offset}')
   
   hltv_results = BeautifulSoup(results_page.text, 'html.parser')
@@ -58,7 +61,7 @@ def get_match_urls(offset: int) -> List[str]:
   return results
 
 def get_match_details(match_urls: List[str]) -> List[Dict[int, Dict[str, str]]]:
-  data_dict = {}
+  match_details_list = []
   url = '/matches/2363184/astralis-vs-spirit-blasttv-paris-major-2023-europe-rmr-b'
   # TODO: Add try catch and handle if info isn't available on the page
   # for url in match_urls:  
@@ -81,38 +84,56 @@ def get_match_details(match_urls: List[str]) -> List[Dict[int, Dict[str, str]]]:
   competition = competition_div.find('a').text
   # get date and cast from page
   unix_datetime_div = team_box.find('div', {'class': 'time','data-unix': True})
-  unix_datetime = int(unix_datetime_div['data-unix']) / 1000
-  # Convert to human readable
-  # TODO: Currently converts date time to 1 hour out, I think???
-  date_time = datetime.utcfromtimestamp(unix_datetime).strftime('%Y-%m-%dT%H:%M:%SZ')
-  # get data demo ID 
+  unix_datetime = int(unix_datetime_div['data-unix'])
+
+  # get demo id
   demo_a_tag = match_details.find('a', {'data-demo-link': True})
-  demo_link = demo_a_tag['data-demo-link']
+  demo_link = re.findall('\d+', demo_a_tag['data-demo-link'])[0]
   
-  data_dict[match_id] = {
+  data_dict = {
+    'hltv_id': int(match_id),
     'url': url,
     'team_a': team_a,
     'team_b': team_b,
-    'team_a_score': team_a_score,
-    'team_b_score': team_b_score,
+    'team_a_score': int(team_a_score),
+    'team_b_score': int(team_b_score),
     'competition': competition,
-    'date': date_time,
-    'demo_id': demo_link,
+    'date': unix_datetime,
+    'demo_id': int(demo_link),
   }
-  print(data_dict)
-  return data_dict
+  match_details_list.append(data_dict)
+  # print(match_details_list)
+  return match_details_list
 
-def load_data_to_db(data: Dict[int, Dict[str, str]], **kwargs):
-  #TODO: create db conn NOTE: This may want pulling into it's own function for use by demo parser?
-  #TODO: create insert statement templace
-  #TODO: iter through dict and insert to table
-  pass
+def parquet_dump(data, **kwargs):
+  #set schema
+  schema = pa.schema([
+    pa.field('match_id', pa.int32()),
+    pa.field('url', pa.string()),
+    pa.field('team_a', pa.string()),
+    pa.field('team_b', pa.string()),
+    pa.field('team_a_score', pa.int8()),
+    pa.field('team_b_score', pa.int8()),
+    pa.field('competition', pa.string()),
+    pa.field('date', pa.date64()),
+    pa.field('demo_id', pa.int32()),
+  ])
+  
+  #create pyarrow table
+  table = pa.Table.from_pylist(data, schema=schema)
+  print(table)
+
+  path = (args.bucket if args.bucket else '/demo_dump/process/') + 'match_details.parquet'
+  print(path)
+  #save pyarrow table to parquet
+  pq.write_table(table, path)
+  return
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Scrapes HLTV.org and loads results to a postgres DB")
   parser.add_argument("--offset", type=str, default=0, help="Number of matches to offset for HLTV results page, default is 0\nThis argument must be used with '=' ie. --offset=100")
 
-  parser.add_argument("--date", type=str, help="Arg must be used with '=' ie. --date=\"25-12-2023\", no default")
+  parser.add_argument("--bucket", type=str, help="S3 bucket can be passed as destination to save match details parquet, otherwise will save to current directory")
 
   args = parser.parse_args()
   main(args)
