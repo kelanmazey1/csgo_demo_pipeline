@@ -68,7 +68,7 @@ def get_match_details(match_urls: List[str]) -> List[Dict[int, Dict[str, str]]]:
   driver.get(f'{HLTV_ADDR}{url}')
   match_details = BeautifulSoup(driver.page_source, 'html.parser')
   team_box = match_details.find('div', class_='standard-box teamsBox')
-  # Get teams 
+  # Get team
   team_a_div = team_box.find('div', class_='team1-gradient')
   team_a = team_a_div.find('div').text
   team_b_div = team_box.find('div', class_='team2-gradient')

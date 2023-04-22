@@ -4,9 +4,7 @@ services:
     image: csgo_demos_get_demos
     build: ./get_demos
     depends_on:
-      db:
-        condition: service_healthy
-        restart: true
+      [db]
   db:
     image: postgres
     secrets:
