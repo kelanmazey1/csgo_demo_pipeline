@@ -38,8 +38,8 @@ def main(args):
 
   # Go to match page and parse data
   data_to_load = get_match_details(match_urls)
-  # data_to_load = [{'match_id': 2363184, 'url': '/matches/2363184/astralis-vs-spirit-blasttv-paris-major-2023-europe-rmr-b', 'team_a': 'Astralis', 'team_b': 'Spirit', 'team_a_score': 2, 'team_b_score': 1, 'competition': 'BLAST.tv Paris Major 2023 Europe RMR B', 'date': '2023-04-12T10:50:00Z', 'demo_id': 79088}]
-  # TODO: Save data dict as parquet to dir, this will be S3 bucket in cloud, local folder otherwise
+  
+  # Save data dict as parquet to dir, this will be S3 bucket in cloud, local folder otherwise
   parquet_dump(data_to_load)
   
   driver.close()
