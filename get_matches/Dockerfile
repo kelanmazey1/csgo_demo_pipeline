@@ -20,5 +20,3 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY ./get_matches.py .
 COPY ./send_matches.py .
-
-CMD ["python3", "send_matches.py"]

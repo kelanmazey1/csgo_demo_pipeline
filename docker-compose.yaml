@@ -23,6 +23,9 @@ services:
     restart: on-failure
     links:
       - rabbitmq
+    command: "python3 send_matches.py"
+  # Start 2 Match detail scrapers, as match page scraping is slow,
+  # which take from match queue and send to download queue
   scraper1:
     image: scrape_match
     build: ./scrape_match
@@ -41,16 +44,26 @@ services:
     links:
       - rabbitmq
     command: python3 listen.py --work_number 2
-
+  # Download and unzip from download queue
+  downloader:
+    image: dl_unzip
+    build: ./download_and_unzip
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    links:
+      - rabbitmq
+    command: python3 dl_unzip.py
+    volumes: 
+      - demo_dump:/demo_dump
+  # Process demo and load to storage
+  # process_demo:
+  #   image:
 
 networks:
   default:
     driver: bridge
-  
+volumes:
+  demo_dump:
 
-  # Start 2 Match detail scrapers, as match page scraping is slow,
-  # which take from match queue and send to download queue
 
-  # Download and unzip from download queue
-
-  # Process demo and load to storage
