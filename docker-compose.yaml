@@ -1,35 +1,38 @@
 version: "3.6"
 services:
+
+  # Scrape for match details send to match queue
+
+  # Start 2 Match detail scrapers, as match page scraping is slow,
+  # which take from match queue and send to download queue
+
+  # Download and unzip from download queue
+
+  # Process demo and load to storage
+
   get_demos:
-    image: csgo_demos_get_demos
+    image: get_demos
     build: ./get_demos
-    depends_on:
-      [db]
-  db:
-    image: postgres
-    secrets:
-        - db_password
-        - db_user
-        - db_default
-    environment:
-      # NOTE: password file must go before user otherwise will think both are defined in password file
-      POSTGRES_USER_FILE: /run/secrets/db_user
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB_FILE: /run/secrets/db_default
     volumes:
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/initdb.sql
-      - csgo_demo_data:/var/lib/postgresql/data
-  adminer:
-    image: adminer
-    ports:
-      - 8080:8080
+      - ./demo_dump:/demo_dump
+    # run interactively for dev
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+  # download_queue:
+  #   image: keinos/sqlite3:latest
+  #   volumes:
+  #     - download_queue:/download_queue.db
+  #   # run interactively for dev
+  #   stdin_open: true # docker run -i
+  #   tty: true        # docker run -t
+  ingest_demo:
+    image: ingest_demo
+    build: ./ingest_demo
+    volumes:
+      - ./demo_dump:/demo_dump
+    # run interactively for dev
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
 volumes:
-  csgo_demo_data:
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-  db_user:
-    file: ./secrets/db_user.txt
-  db_default:
-    file: ./secrets/db_default.txt
-  
+  demo_dump:
+  download_queue:
