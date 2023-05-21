@@ -1,6 +1,4 @@
 import re
-import requests
-import argparse
 from datetime import datetime
 from bs4 import BeautifulSoup
 import pandas as pd 
@@ -18,45 +16,6 @@ HLTV_ADDR = 'https://www.hltv.org'
 
 driver.get(HLTV_ADDR)
 print(f'did it work: {driver.title}')
-
-def main(args):
-  offset = int(args.offset)
-  # Generate list of offset values, 0 always included as this is the final results page
-  offset_values = [0]
-  while offset > 0:
-    offset_values.append(offset)
-    # Use 100 as this is equivalent to going to the next page on hltv
-    offset -= 100
-
-  # Get match URLS, ~100 matches per page offset decreases by 100 until most recent page ie. offset=100
-  match_urls = []
-  print('test')
-  for offset in offset_values:
-    match_urls += (get_match_urls(offset=offset))
-    # # remove duplicate matches
-    match_urls = list(set(match_urls))
-    # # Go to match page and parse data
-    data_to_load = get_match_details(match_urls)
-    # Send demo link + metadata to event bridge for processing
-    parquet_dump(data_to_load)
-
-  driver.close()
-
-def get_match_urls(offset: int) -> List[str]:
-  # Get HTML doc for beautiful soup
-  # Uses requests instead of chrome driver for sake of speed
-  results_page = requests.get(f'{HLTV_ADDR}/results?offset={offset}')
-  
-  hltv_results = BeautifulSoup(results_page.text, 'html.parser')
-  results = []
-
-  # Pull match link from html
-  for a in hltv_results.find_all("a", class_="a-reset"):
-    link = str(a.get("href"))
-    
-    if link.startswith("/matches/"):
-      results.append(link)
-  return results
 
 def get_match_details(match_urls: List[str]) -> List[Dict[int, Dict[str, str]]]:
   match_details_list = []
@@ -121,6 +80,7 @@ def parquet_dump(data, **kwargs):
   table = pa.Table.from_pylist(data, schema=schema)
   print(table)
 
+<<<<<<< HEAD:get_demos/get_demos.py
   path = (args.bucket if args.bucket else '/demo_dump/process/') + 'match_details.parquet'
   print(path)
   #save pyarrow table to parquet
@@ -135,3 +95,7 @@ if __name__ == "__main__":
 
   args = parser.parse_args()
   main(args)
+=======
+if __name__ == "__main__":
+  main()
+>>>>>>> 706443d12932db473ed29fb2c49dadaf5e5e31f4:scraper/scraper.py
