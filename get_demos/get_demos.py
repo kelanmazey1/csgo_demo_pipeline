@@ -30,18 +30,16 @@ def main(args):
 
   # Get match URLS, ~100 matches per page offset decreases by 100 until most recent page ie. offset=100
   match_urls = []
+  print('test')
   for offset in offset_values:
     match_urls += (get_match_urls(offset=offset))
+    # # remove duplicate matches
+    match_urls = list(set(match_urls))
+    # # Go to match page and parse data
+    data_to_load = get_match_details(match_urls)
+    # Send demo link + metadata to event bridge for processing
+    parquet_dump(data_to_load)
 
-  # remove duplicate matches
-  match_urls = list(set(match_urls))
-
-  # Go to match page and parse data
-  data_to_load = get_match_details(match_urls)
-  
-  # Save data dict as parquet to dir, this will be S3 bucket in cloud, local folder otherwise
-  parquet_dump(data_to_load)
-  
   driver.close()
 
 def get_match_urls(offset: int) -> List[str]:

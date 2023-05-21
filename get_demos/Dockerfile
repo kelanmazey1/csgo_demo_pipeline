@@ -3,11 +3,15 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && \
     apt-get install -y python3 \
     python3-pip \
-    wget
+    wget \
+    unzip
 
 # Get chrome chromedriver for Selenium
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
+ARG CHROME_VERSION="113.0.5672.92-1"
+
+RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+  && apt install -y /tmp/chrome.deb \
+  && rm /tmp/chrome.deb
 
 RUN pip3 install --no-cache --upgrade pip setuptools
 
@@ -16,4 +20,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY ./get_demos.py .
 
-CMD [ "bash"]
+CMD [ "bash" ]

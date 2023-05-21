@@ -1,5 +1,15 @@
 version: "3.6"
 services:
+
+  # Scrape for match details send to match queue
+
+  # Start 2 Match detail scrapers, as match page scraping is slow,
+  # which take from match queue and send to download queue
+
+  # Download and unzip from download queue
+
+  # Process demo and load to storage
+
   get_demos:
     image: get_demos
     build: ./get_demos
@@ -8,14 +18,13 @@ services:
     # run interactively for dev
     stdin_open: true # docker run -i
     tty: true        # docker run -t
-  download_manager:
-    image: demo_download_manager
-    build: ./download_manager
-    volumes:
-      - ./demo_dump:/demo_dump
-    # run interactively for dev
-    stdin_open: true # docker run -i
-    tty: true        # docker run -t
+  # download_queue:
+  #   image: keinos/sqlite3:latest
+  #   volumes:
+  #     - download_queue:/download_queue.db
+  #   # run interactively for dev
+  #   stdin_open: true # docker run -i
+  #   tty: true        # docker run -t
   ingest_demo:
     image: ingest_demo
     build: ./ingest_demo
@@ -26,3 +35,4 @@ services:
     tty: true        # docker run -t
 volumes:
   demo_dump:
+  download_queue:
