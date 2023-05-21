@@ -1,7 +1,52 @@
 version: "3.6"
 services:
+  # Start rabbitmq
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  get_matches:
+    image: get_matches
+    build: ./get_matches
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    links:
+      - rabbitmq
+  scraper1:
+    image: scrape_match
+    build: ./scrape_match
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    links:
+      - rabbitmq
+    command: python3 listen.py --work_number 1
+  scraper2:
+    image: scrape_match
+    build: ./scrape_match
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    links:
+      - rabbitmq
+    command: python3 listen.py --work_number 2
 
-  # Scrape for match details send to match queue
+
+networks:
+  default:
+    driver: bridge
+  
 
   # Start 2 Match detail scrapers, as match page scraping is slow,
   # which take from match queue and send to download queue
@@ -9,30 +54,3 @@ services:
   # Download and unzip from download queue
 
   # Process demo and load to storage
-
-  get_demos:
-    image: get_demos
-    build: ./get_demos
-    volumes:
-      - ./demo_dump:/demo_dump
-    # run interactively for dev
-    stdin_open: true # docker run -i
-    tty: true        # docker run -t
-  # download_queue:
-  #   image: keinos/sqlite3:latest
-  #   volumes:
-  #     - download_queue:/download_queue.db
-  #   # run interactively for dev
-  #   stdin_open: true # docker run -i
-  #   tty: true        # docker run -t
-  ingest_demo:
-    image: ingest_demo
-    build: ./ingest_demo
-    volumes:
-      - ./demo_dump:/demo_dump
-    # run interactively for dev
-    stdin_open: true # docker run -i
-    tty: true        # docker run -t
-volumes:
-  demo_dump:
-  download_queue:

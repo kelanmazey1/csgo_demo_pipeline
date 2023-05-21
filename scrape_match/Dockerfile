@@ -18,6 +18,5 @@ RUN pip3 install --no-cache --upgrade pip setuptools
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-COPY ./get_demos.py .
-
-CMD [ "bash" ]
+COPY ./scrape_match.py .
+COPY ./listen.py .
