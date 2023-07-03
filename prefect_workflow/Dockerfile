@@ -8,6 +8,7 @@ RUN apt-get update && \
 
 # Get chrome chromedriver for Selenium
 ARG CHROME_VERSION="113.0.5672.92-1"
+# VERSION installed locally 114.0.5735.198
 
 RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
   && apt install -y /tmp/chrome.deb \
