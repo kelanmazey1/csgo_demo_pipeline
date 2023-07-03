@@ -1,7 +1,9 @@
-import pika, patool, requests, os, urllib, shutil
+import patoolib, requests, os, urllib, shutil, sys
+from prefect import task
 
 
-def main(match_details: str):
+@task()
+def dl_unzip(match_details: str):
     os.chdir("/demo_dump")
     print("changed dir")
     # demo_url = f'https://www.hltv.org/download/demo/{match_details['demo_id']}'
@@ -29,8 +31,8 @@ def main(match_details: str):
     ) as out_file:
         shutil.copyfileobj(response, out_file)
 
-    patool.extract_archive("./rar_files/demo.rar", outdir="./demo_files/")
+    patoolib.extract_archive("./rar_files/demo.rar", outdir="./demo_files/")
 
 
 if __name__ == "__main__":
-    main("hello")
+    sys.exit(0)

@@ -1,4 +1,4 @@
-import re, requests, argparse, json
+import re, requests, argparse, json, sys
 from datetime import datetime
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -12,11 +12,10 @@ options.add_argument("--disable-dev-shm-usage")
 driver = uc.Chrome(options=options)
 HLTV_ADDR = "https://www.hltv.org"
 
-driver.get(HLTV_ADDR)
-print(f"did it work: {driver.title}")
 
-
-def main(args):
+def get_match_urls(args):
+    driver.get(HLTV_ADDR)
+    print(f"did it work: {driver.title}")
     offset = int(args.offset)
     # Generate list of offset values, 0 always included as this is the final results page
     offset_values = [0]
@@ -28,7 +27,7 @@ def main(args):
     # Get match URLS, ~100 matches per page offset decreases by 100 until most recent page ie. offset=100
     match_urls = []
     for offset in offset_values:
-        match_urls += get_match_urls(offset=offset)
+        match_urls += scrape_results(offset=offset)
         # remove duplicate matches
         match_urls = list(set(match_urls))
 
@@ -36,7 +35,7 @@ def main(args):
     return match_urls
 
 
-def get_match_urls(offset: int) -> List[str]:
+def scrape_results(offset: int) -> List[str]:
     URL = f"{HLTV_ADDR}/results?offset={offset}"
     print(f"Getting matches from {URL}")
     # Get HTML doc for beautiful soup
@@ -51,3 +50,7 @@ def get_match_urls(offset: int) -> List[str]:
         if link.startswith("/matches/"):
             results.append(link)
     return results
+
+
+if __name__ == "__main__":
+    sys.exit(0)

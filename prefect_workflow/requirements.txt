@@ -6,3 +6,4 @@ pandas>=1.1.5
 selenium>=4.0
 webdriver-manager>=3.8.6
 undetected-chromedriver>=2.1.1
+prefect>=2.10.18

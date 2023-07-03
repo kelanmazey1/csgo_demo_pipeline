@@ -1,3 +1,4 @@
 demo_dump/*
 secrets/*
 archive/*
+prefect_workflow/functions/__pycache__/*
