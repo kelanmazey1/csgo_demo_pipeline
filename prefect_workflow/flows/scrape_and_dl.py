@@ -1,17 +1,21 @@
 import os, sys
 
-sys.path.append("../functions")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+subdirectory_path = os.path.join(current_dir, "functions")
+sys.path.append(subdirectory_path)
 
-import dl_unzip
-import get_matches
-import scrape_match
-from prefect import task, flow
+# from dl_unzip import dl_unzip
+from get_matches import get_match_urls
+from scrape_match import get_match_details
+from prefect import flow
 
 
-@task()
 @flow()
 def download_and_parse():
-    print("hello")
+    match_urls = get_match_urls()
+    match_data = get_match_details.map(match_urls)
+    print(match_data)
 
 
-download_and_parse()
+if __name__ == "__main__":
+    download_and_parse()
