@@ -1,10 +1,7 @@
-import re, requests, argparse, json, sys
-from datetime import datetime
+import sys
 from bs4 import BeautifulSoup
-import pandas as pd
-from typing import Dict, List, Tuple
+from typing import List
 import undetected_chromedriver as uc
-from prefect import task
 
 # Create web driver - uses undected to avoid cloudflare
 options = uc.ChromeOptions()
@@ -14,8 +11,7 @@ driver = uc.Chrome(options=options)
 HLTV_ADDR = "https://www.hltv.org"
 
 
-@task()
-def get_match_urls(offset=0):
+def get_match_urls(offset=0) -> List[str]:
     driver.get(HLTV_ADDR)
     print(f"did it work: {driver.title}")
     # Generate list of offset values, 0 always included as this is the final results page
@@ -43,7 +39,6 @@ def scrape_results(offset: int) -> List[str]:
     driver.get(URL)
     hltv_results = BeautifulSoup(driver.page_source, "html.parser")
     # hltv_results = BeautifulSoup(results_page.text, "html.parser")
-    print(hltv_results)
     results = []
     # Pull match link from html
     for a in hltv_results.find_all("a", class_="a-reset"):
@@ -51,7 +46,6 @@ def scrape_results(offset: int) -> List[str]:
 
         if link.startswith("/matches/"):
             results.append(link)
-    print(f"These are the results: {results}")
     return results
 
 

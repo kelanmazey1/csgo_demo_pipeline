@@ -1,8 +1,6 @@
 import patoolib, requests, os, urllib, shutil, sys
-from prefect import task
 
 
-@task()
 def dl_unzip(match_details: str):
     # demo_url = f'https://www.hltv.org/download/demo/{match_details['demo_id']}'
     demo_url = "https://www.hltv.org/download/demo/79831"

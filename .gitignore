@@ -1,4 +1,7 @@
 demo_dump/*
 secrets/*
 archive/*
-prefect_workflow/functions/__pycache__/*
+dagster_workflow/assets/functions/__pycache__/*
+dagster_workflow/assets/chromedriver
+dagster_workflow/demo-pipeline/dagster_test
+dagster_workflow/build

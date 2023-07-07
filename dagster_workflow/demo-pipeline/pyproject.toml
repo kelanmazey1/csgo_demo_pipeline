@@ -1,0 +1,31 @@
+[project]
+name = "demo-pipeline"
+version = "0.0.1"
+description = "pipeline to download and process CSGO demos from HLTV.org"
+requires-python = ">=3.9"
+dependencies = [
+    "selenium==4.9.0",
+    "requests==2.30.0",
+    "patool== 1.12",
+    "beautifulsoup4==4.11.2",
+    "pandas==1.1.5",
+    "webdriver-manager==3.8.6",
+    "undetected-chromedriver==2.1.1",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.dagster]
+module_name = "demo_pipeline"
+module = "demo_pipeline.functions"
+dependencies = [
+    "selenium==4.9.0",
+    "requests==2.30.0",
+    "patool== 1.12",
+    "beautifulsoup4==4.11.2",
+    "pandas==1.1.5",
+    "webdriver-manager==3.8.6",
+    "undetected-chromedriver==2.1.1",
+]
