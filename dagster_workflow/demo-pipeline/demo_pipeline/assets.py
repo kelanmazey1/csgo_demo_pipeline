@@ -1,9 +1,10 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 from dagster._core.execution.context.input import InputContext
 from dagster._core.execution.context.output import OutputContext
 from demo_pipeline.functions.get_matches import get_match_urls 
 from demo_pipeline.functions.scrape_match import get_match_details
-from dagster import asset, op
+from demo_pipeline.functions.dl_unzip import dl_unzip
+from dagster import asset, Definitions, define_asset_job, op, Output, RetryPolicy
 from dagster import ConfigurableIOManager
 
 # TODO: Not currently sure how this will work in current workflow
@@ -15,27 +16,35 @@ from dagster import ConfigurableIOManager
 #     def handle_output(self, context: OutputContext, obj: Any) -> None:
 #         return super().handle_output(context, obj)
 
-# @asset()
-# def pipeline():
-#     get_matches()
-#     scrape_match()
-#     dl_unzip()
-
-@asset()
+@asset
 def matches_on_current_results_page():
     results = get_match_urls()[:10]
     print(results)
-    return results
+    return Output(
+        value=results,
+        metadata={
+            "num_matches": len(results),
+            "preview": results[:5]
+        })
 
-# @op
-# def return_match_details(match_url: str) -> Dict:
-
-@asset()
+@asset(retry_policy=RetryPolicy(max_retries=3))
 def match_details(matches_on_current_results_page):
-    matches_data = []
-    
+    match_data = []
     for match in matches_on_current_results_page:
-        matches_data.append(get_match_details(match))
+        match_data.append(get_match_details(match))
+    
+    print(match_data)
 
-    return matches_data
+    return Output(
+        value=match_data,
+        metadata={
+            "num_matches": len(match_data),
+            "preview": match_data[:1]
+        })
+
+@asset
+def demo_download(match_details) -> None:
+    for match in match_details:
+        dl_unzip(match)
+
 

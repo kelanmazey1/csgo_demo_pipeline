@@ -40,30 +40,38 @@ def get_match_details(match_url: str) -> List[Dict]:
         # get date and cast from page
         unix_datetime_div = team_box.find("div", {"class": "time", "data-unix": True})
         unix_datetime = int(unix_datetime_div["data-unix"])
-
+    except AttributeError as e:
+        driver.close()
+        raise AttributeError(f"Couldn't get details from match {match_url}, original error: {e}")
+    
+    try:
         # get demo id
         demo_a_tag = match_details.find("a", {"data-demo-link": True})
         demo_link = re.findall("\d+", demo_a_tag["data-demo-link"])[0]
-
         driver.close()
     except AttributeError as e:
-        # TODO: change to raise error so @op can retry
-        print(f"Couldn't get details from match {match_url}, original error: {e}")
-        return
+        driver.close()
+        raise AttributeError(f"Couldn't find a demo ID for {match_url}, original error: {e}")
+        
+    #type cast scores
+    team_a_score = int(team_a_score)
+    team_b_score = int(team_b_score)
 
-    format = 'bo3' if int(team_a_score) <= 2 and int(team_b_score) <= 2 else 'bo1'
+
+    # bo1 so score will be the rounds won in a map else could be bo2, bo3 etc.
+    maps_played = 1 if team_a_score + team_b_score > 3 else team_a_score + team_b_score
 
     match_data = {
         "hltv_id": int(match_id),
         "url": match_url,
         "team_a": team_a,
         "team_b": team_b,
-        "team_a_score": int(team_a_score),
-        "team_b_score": int(team_b_score),
+        "team_a_score": team_a_score,
+        "team_b_score": team_b_score,
         "competition": competition,
         "date": datetime.utcfromtimestamp(unix_datetime / 1000).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "demo_id": int(demo_link),
-        "format": format
+        "maps_played": maps_played,
     }
 
     return match_data
