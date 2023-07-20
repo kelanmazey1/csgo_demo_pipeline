@@ -58,8 +58,8 @@ def get_match_details(match_url: str) -> List[Dict]:
     team_b_score = int(team_b_score)
 
 
-    # bo1 so score will be the rounds won in a map else could be bo2, bo3 etc.
-    maps_played = 1 if team_a_score + team_b_score > 3 else team_a_score + team_b_score
+    # bo1 so score will be the rounds won which will be 16 minimum
+    maps_played = 1 if team_a_score + team_b_score >= 16 else team_a_score + team_b_score
 
     match_data = {
         "hltv_id": int(match_id),
