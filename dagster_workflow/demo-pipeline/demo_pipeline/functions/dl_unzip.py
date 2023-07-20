@@ -5,11 +5,11 @@ import requests
 import undetected_chromedriver as uc
 
 def dl_unzip(match_details: Dict):
-    # demo_url = f"https://www.hltv.org/download/demo/{match_details['demo_id']}"
-    demo_url = "https://www.hltv.org/download/demo/79831"
+    demo_url = f"https://www.hltv.org/download/demo/{match_details['demo_id']}"
+    # demo_url = "https://www.hltv.org/download/demo/79831"
     DEMO_STORE = "./demo_files"
 
-    dir_name = f"{match_details['team_a']}-vs-{match_details['team_b']}-{match_details['date']}"
+    dir_name = f"{match_details['demo_id']}"
 
     os.mkdir(dir_name)
 
@@ -60,9 +60,4 @@ def dl_unzip(match_details: Dict):
     return os.path.join(work_dir_abs, DEMO_STORE)
 
 if __name__ == "__main__":
-    dl_unzip({
-        "team_a": "test1",
-        "team_b": "test2",
-        "date": "2023-07-08",
-        "maps_played": 3, 
-    })
+    sys.exit(0)

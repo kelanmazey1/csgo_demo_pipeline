@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+import os
 from dagster._core.execution.context.input import InputContext
 from dagster._core.execution.context.output import OutputContext
 from demo_pipeline.functions.get_matches import get_match_urls 
@@ -44,7 +44,27 @@ def match_details(matches_on_current_results_page):
 
 @asset
 def demo_download(match_details) -> None:
+    # Make working dir
+    cwd = os.getcwd()
+    
+    os.mkdir('work')
+    work_dir = os.path.join(cwd, 'work')
+
     for match in match_details:
+        # Change back to work_dir for each match
+        os.chdir(work_dir)
         dl_unzip(match)
+
+@asset
+def demo_parsed_json(match_details):
+    pass
+    # Go to dir for demo_id
+
+    # Iterate through each demo and write out json for match events
+
+    # Attach events json to other match details
+
+
+
 
 
