@@ -6,3 +6,4 @@ To get things to work I:
 - Create a new venv with python3 -m venv mynewvenv
 - Added dependencies to pyproject.toml under the [project] header as well as [tools.dagster]
 - Ran pip install . from the root of the project
+- Testing lazygit
