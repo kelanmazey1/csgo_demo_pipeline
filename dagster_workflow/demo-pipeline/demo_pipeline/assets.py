@@ -1,4 +1,6 @@
 import os
+import subprocess
+import json
 from dagster._core.execution.context.input import InputContext
 from dagster._core.execution.context.output import OutputContext
 from demo_pipeline.functions.get_matches import get_match_urls 
@@ -57,14 +59,17 @@ def demo_download(match_details) -> None:
 
 @asset
 def demo_parsed_json(match_details):
+    # Create output file
+     
+    
+    for match in match_details:
+        subprocess.run(['./parse_demo', f'{match}'])
+         
+        
     pass
     # Go to dir for demo_id
 
     # Iterate through each demo and write out json for match events
 
     # Attach events json to other match details
-
-
-
-
 

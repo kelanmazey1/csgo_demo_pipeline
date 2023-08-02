@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+    "strings"
 
 	r3 "github.com/golang/geo/r3"
 	dem "github.com/markus-wa/demoinfocs-golang/v3/pkg/demoinfocs"
@@ -13,9 +14,17 @@ import (
 
 func main() {
 
-	// Should only be passed one arg which is path to demo_file
-	demo_path := os.Args[1]
-	f, err := os.Open(demo_path)
+	// Should only be passed two args which is path to demo_file, assumes that outfile has '/' at the end
+    // TODO: Actually handle and check if out dir is available
+    demo_path := os.Args[1]
+    outpath_arg := os.Args[2]
+	
+    var outpath strings.Builder
+
+    outpath.WriteString(outpath_arg)
+    outpath.WriteString("output.json")
+    
+    f, err := os.Open(demo_path)
 
 	if err != nil {
 		log.Panic("failed to open demo file: ", err)
@@ -166,7 +175,7 @@ func main() {
 		fmt.Printf("Error: %s", j_err.Error())
 	}
 
-	f_err := os.WriteFile("output.json", j, 0644)
+	f_err := os.WriteFile(outpath.String(), j, 0644)
 	if f_err != nil {
 		panic(f_err)
 	}
