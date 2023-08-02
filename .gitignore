@@ -9,5 +9,6 @@ dagster_workflow/demo-pipeline/demo_pipeline/__pycache__
 dagster_workflow/demo-pipeline/chromedriver
 dagster_workflow/demo-pipeline/demo_pipeline/functions/__pycache__/*
 dagster_workflow/demo-pipeline/demo_pipeline.egg-info/*
+dagster_workflow/demo-pipeline/work/*
 *.dem
 */*.dem
