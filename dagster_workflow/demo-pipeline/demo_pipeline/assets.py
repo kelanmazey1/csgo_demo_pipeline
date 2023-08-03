@@ -20,7 +20,7 @@ from dagster import ConfigurableIOManager
 
 @asset
 def matches_on_current_results_page():
-    results = get_match_urls()[:10]
+    results = get_match_urls()[:1]
     print(results)
     return Output(
         value=results,
@@ -45,7 +45,7 @@ def match_details(matches_on_current_results_page):
         })
 
 @asset
-def demo_download(match_details) -> None:
+def demo_download(match_details):
     # Make working dir
     cwd = os.getcwd()
     
@@ -57,16 +57,37 @@ def demo_download(match_details) -> None:
         os.chdir(work_dir)
         dl_unzip(match)
 
+    # Return match_details with demo download location added
+
 @asset
-def demo_parsed_json(match_details):
-    # Create output file
-     
-    
+def demo_parsed_json(match_details, demo_download):
+    # make empy output fie to append to
+    open("all_maps.json", "a").close()
+
+    # Parse each match as Json then append to final output 
     for match in match_details:
-        subprocess.run(['./parse_demo', f'{match}'])
-         
         
-    pass
+        demos_folder = f"./work/{match['demo_id']}/demo_files/"
+
+        if not os.path.exists(demos_folder):
+            raise FileExistsError("Work dir does not exist!")
+        
+        final_output = []
+
+        for count, demo in enumerate(os.listdir(demos_folder)):
+            demo_path = os.path.join(os.getcwd(), demos_folder, demo)
+            subprocess.run(["./demo_pipeline/functions/demo_parse/parse_demo", demo_path, "./"])
+           
+
+            with open("output.json") as o:
+                output_obj = json.load(o)
+
+            final_output.append(output_obj)
+    
+
+        with open("all_maps.json", "w") as all_maps_out:
+            json.dump(final_output, all_maps_out)
+
     # Go to dir for demo_id
 
     # Iterate through each demo and write out json for match events
