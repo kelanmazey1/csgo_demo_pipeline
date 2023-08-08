@@ -1,5 +1,4 @@
 import patoolib, requests, os, urllib, shutil, sys, time
-import rarfile
 from typing import Dict
 import requests
 import undetected_chromedriver as uc

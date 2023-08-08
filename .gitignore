@@ -3,13 +3,13 @@ secrets/*
 archive/*
 dagster_workflow/assets/functions/__pycache__/*
 dagster_workflow/assets/chromedriver
-dagster_workflow/demo-pipeline/dagster_test
+dagster_workflow/demo-pipeline/dagster-dev/*
 dagster_workflow/demo-pipeline/build/*
 dagster_workflow/demo-pipeline/demo_pipeline/__pycache__
 dagster_workflow/demo-pipeline/chromedriver
 dagster_workflow/demo-pipeline/demo_pipeline/functions/__pycache__/*
-dagster_workflow/demo-pipeline/demo_pipeline.egg-info/*
-dagster_workflow/demo-pipeline/work/*
+agster_workflow/demo-pipeline/demo_pipeline.egg-info/*
 *.dem
 */*.dem
+dagster_workflow/demo-pipeline/demo_pipeline.egg-info
 dagster_workflow/demo-pipeline/demo_pipeline/functions/demo_parse/parse_demo
