@@ -53,6 +53,26 @@ def get_details_of_match(matches_on_results_page):
     return (Output(success, output_name="successful_scrapes", metadata={"number_of_success": len(success), "preview": failed[:5]}), 
         Output(failed, output_name="failed_scrapes", metadata={"number_of_fails": len(failed), "preview": failed[:5]}))
 
+
+@op
+def demo_download(match_details) -> None:
+    return dl_unzip(match_details)
+    # Return match_details with demo download location added
+
+@op
+def parse_json(demo):
+    # # Run golang parser
+    # subprocess.run(
+    #     ["./demo_pipeline/functions/demo_parse/parse_demo", demo_path, "./"]
+    # )
+    pass
+
+@graph_asset
+def json_table():
+    for i ,scrape in enumerate(successful_scrapes):
+        if i == 0:
+            return demo_download(scrape)
+
 # @graph_asset
 # def parse_demo():
 #     return get_details_of_match(matches_on_current_results_page())
