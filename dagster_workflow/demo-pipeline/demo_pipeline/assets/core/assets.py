@@ -79,15 +79,6 @@ def parse_json(demo):
 def download_demos():
     demo_download()
 
-@op
-def return_five():
-    return 5
-
-
-@op
-def add_one(arg):
-    return arg + 1
-
 
 @job
 def do_stuff():
