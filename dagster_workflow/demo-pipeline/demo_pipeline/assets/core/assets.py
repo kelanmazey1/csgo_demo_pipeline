@@ -53,37 +53,6 @@ def get_details_of_match(matches_on_results_page):
     return (Output(success, output_name="successful_scrapes", metadata={"number_of_success": len(success), "preview": failed[:5]}), 
         Output(failed, output_name="failed_scrapes", metadata={"number_of_fails": len(failed), "preview": failed[:5]}))
 
-@op
-def demo_download(match_details) -> None:
-    # Make working dir
-    # cwd = os.getcwd()
-
-    # os.mkdir("work")
-    # work_dir = os.path.join(cwd, "work")
-
-    # os.chdir(work_dir)
-    for match in match_details:
-        dl_unzip(match)
-
-    # Return match_details with demo download location added
-
-@op
-def parse_json(demo):
-    # # Run golang parser
-    # subprocess.run(
-    #     ["./demo_pipeline/functions/demo_parse/parse_demo", demo_path, "./"]
-    # )
-    pass
-
-@job
-def download_demos():
-    demo_download()
-
-
-@job
-def do_stuff():
-    add_one(return_five())
-
 # @graph_asset
 # def parse_demo():
 #     return get_details_of_match(matches_on_current_results_page())
