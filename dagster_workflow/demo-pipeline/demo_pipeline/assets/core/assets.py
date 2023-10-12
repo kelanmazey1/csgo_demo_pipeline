@@ -1,10 +1,9 @@
-import subprocess
-from dagster._core.execution.context.input import InputContext
-from dagster._core.execution.context.output import OutputContext
+import subprocess, os
+from typing import List, Dict
 from demo_pipeline.utils.get_matches import get_match_urls
 from demo_pipeline.utils.scrape_match import get_match_details
 from demo_pipeline.utils.dl_unzip import dl_unzip
-from dagster import asset, Definitions, job, op, Output, RetryRequested, graph_asset, multi_asset, AssetOut
+from dagster import asset, op, Output, graph_asset, multi_asset, AssetOut
 
 
 # TODO: Not currently sure how this will work in current workflow
@@ -18,8 +17,8 @@ from dagster import asset, Definitions, job, op, Output, RetryRequested, graph_a
 
 
 @asset
-def matches_on_results_page():
-    results = get_match_urls()[:30]
+def matches_on_results_page() -> Output[List[str]]:
+    results = get_match_urls()[:1]
     print(results)
     return Output(
         value=results, metadata={"num_matches": len(results), "preview": results[:5]}
@@ -33,45 +32,58 @@ def matches_on_results_page():
         "failed_scrapes": AssetOut()
     }
 )
-def get_details_of_match(matches_on_results_page):
+def get_details_of_match(matches_on_results_page: Output[List[str]]):
     # try get match details, can fail for a number of reasons, if fails log and retry
     # TODO: attempt to add to queue for review, try make multi asset, failed queue succeeded queue
     success = []
     failed = []
     for match in matches_on_results_page:
+        # skip demo if is_cs2 as parser is not ready
         try:
             success.append(get_match_details(match))
-        except Exception:
+        except Exception as e:
             # get hltv id if fails
             print("IT'S IN THE FAILED PART")
+            error_string = str(e)
             failed.append({
                 "match_url": match.rsplit('/', 1)[-1],
                 "demo_id": None,
-                "message": "download error"
+                "message": "download error",
+                "exception": error_string
                 })
             # raise RetryRequested(max_retries=5) from e
-    return (Output(success, output_name="successful_scrapes", metadata={"number_of_success": len(success), "preview": failed[:5]}), 
+    return (Output(success, output_name="successful_scrapes", metadata={"number_of_success": len(success), "preview": success[:5]}), 
         Output(failed, output_name="failed_scrapes", metadata={"number_of_fails": len(failed), "preview": failed[:5]}))
 
 
 @op
-def demo_download(match_details) -> None:
-    return dl_unzip(match_details)
+def demo_download(match_details) -> List[str]:
+    output = []
+    for match in match_details:
+        if match["is_cs2"]:
+            continue
+        output.append(dl_unzip(match))
+
+    return output
     # Return match_details with demo download location added
 
 @op
-def parse_json(demo):
+def parse_json(demo_paths: List[str]) -> None:
     # # Run golang parser
-    # subprocess.run(
-    #     ["./demo_pipeline/functions/demo_parse/parse_demo", demo_path, "./"]
-    # )
-    pass
+    for path in demo_paths:
+        for file in os.listdir(path):
+            demo_path = os.path.join(path, file)
+            print(demo_path)
+            subprocess.run(
+                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_path, "./"]
+                )
+            # TODO: store JSONs somewhere after parse as currently overwrites each time in loop
+            # thinking best way is something like duckdb for local? Maybe just to file storage
+    return
 
 @graph_asset
-def json_table():
-    for i ,scrape in enumerate(successful_scrapes):
-        if i == 0:
-            return demo_download(scrape)
+def json_table(successful_scrapes: List[Dict]) -> List[str]:
+    return parse_json(demo_download(successful_scrapes))
 
 # @graph_asset
 # def parse_demo():

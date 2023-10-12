@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 import undetected_chromedriver as uc
 
 
-def get_match_details(match_url: str) -> List[Dict]:
+def get_match_details(match_url: str) -> Dict:
     # Create web driver - uses undected to avoid cloudflare
     options = uc.ChromeOptions()
     options.add_argument("--headless")
@@ -25,6 +25,8 @@ def get_match_details(match_url: str) -> List[Dict]:
     # get match_id from url
     try:
         team_box = match_details.find("div", class_="standard-box teamsBox")
+
+        match_footnotes = match_details.find("div", class_="padding preformatted-text").text
         # Get team
         team_a_div = team_box.find("div", class_="team1-gradient")
         team_a = team_a_div.find("div").text
@@ -61,6 +63,8 @@ def get_match_details(match_url: str) -> List[Dict]:
     # bo1 so score will be the rounds won which will be 16 minimum
     maps_played = 1 if team_a_score + team_b_score >= 16 else team_a_score + team_b_score
 
+    is_cs2 = "Counter-Strike 2" in match_footnotes
+
     match_data = {
         "hltv_id": int(match_id),
         "url": match_url,
@@ -72,6 +76,7 @@ def get_match_details(match_url: str) -> List[Dict]:
         "date": datetime.utcfromtimestamp(unix_datetime / 1000).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "demo_id": int(demo_link),
         "maps_played": maps_played,
+        "is_cs2": is_cs2,
     }
 
     return match_data
