@@ -1,8 +1,10 @@
 import subprocess
 import os
+
+import patoolib
 import pandas as pd
 from ...resources import HltvResource
-from typing import List, Dict
+from typing import List, Dict, Any
 from demo_pipeline.utils.get_matches import get_match_urls
 from demo_pipeline.utils.dl_unzip import dl_unzip
 
@@ -10,7 +12,6 @@ from dagster import (
     asset,
     op,
     Output,
-    Out,
     graph_asset,
     multi_asset,
     AssetOut,
@@ -18,10 +19,12 @@ from dagster import (
     get_dagster_logger,
 )
 
-@asset(io_manager_key="fs_io_manager")
-def matches_on_results_page() -> Output[List[str]]:
+@asset(
+    io_manager_key="fs_io_manager",
+)
+def matches_on_results_page(hltv_scraper: HltvResource) -> Output[List[str]]:
     logger = get_dagster_logger()
-    results = get_match_urls()[:20]
+    results = hltv_scraper.get_results()
     logger.info(results)
     return Output(
         value=results, metadata={"num_matches": len(results), "preview": results[:5]}
@@ -35,14 +38,12 @@ def matches_on_results_page() -> Output[List[str]]:
         "failed_scrapes": AssetOut()
     }
 )
-def get_details_of_match(
+def match_details(
     context: AssetExecutionContext,
     hltv_scraper: HltvResource,
     matches_on_results_page: List[str]
 ):
-    logger = get_dagster_logger()
     # try get match details, can fail for a number of reasons, if fails log and retry
-    # TODO: attempt to add to queue for review, try make multi asset, failed queue succeeded queue
     success = []
     failed = []
     for match in matches_on_results_page:
@@ -54,16 +55,53 @@ def get_details_of_match(
         else:
             failed.append(match_data)
         
-        logger.info(match_data)
+    context.add_output_metadata(
+        metadata={
+            "num_csgo_games": len([match for match in success if not match["is_cs2"]]),
+            "num_cs2_games": len([match for match in success if match["is_cs2"]]),
+        }
+    )
 
     return (Output(success, output_name="successful_scrapes", metadata={"number_of_success": len(success), "preview": success[:5]}), 
         Output(failed, output_name="failed_scrapes", metadata={"number_of_fails": len(failed), "preview": failed[:5]}))
 
+# TODO: attempt to add to queue for review, try make multi asset, failed queue succeeded queue
+@asset
+def retried_scrapes(failed_scrapes):
+    pass
 
-@op
-def demo_download(match) -> str:
-    if not match["is_cs2"]:
-        return dl_unzip(match)
+@op(
+    io_manager_key="fs_io_manager",
+)
+def demo_download(successful_scrape: Dict[str, Any], hltv_scraper: HltvResource) -> str:
+    """ Returns a path to a directory of demo files, each directory represents a match """
+    
+    if not successful_scrape["is_cs2"]:
+        hltv_scraper.download_demos(successful_scrape["demo_id"])
+
+@op(
+    io_manager_key="fs_io_manager",
+    deps=[demo_download],
+)
+def demo_jsons() -> None:
+    """ Uses go script to parse demo files to json, leaves a json in match directory renamed to match and map """
+    # Read in .rar file with io
+    rar_files = [x for x in os.listdir(".") if x.endswith(".rar")]
+    if len(rar_files) > 1:
+        raise FileExistsError("More than 2 .rar files have been found, expected only 1")
+    
+    # Unzip archive
+    patoolib.extract_archive(rar_files[0], outdir=".")
+
+    
+
+
+
+    
+@graph_asset
+def json_table(successful_scrapes: List[Dict[str, Any]]) -> List[str]:
+    pass
+
 
 
 # # TODO: Actually just return a single JSON file, as the file is the asset 
@@ -93,6 +131,3 @@ def demo_download(match) -> str:
 
 # This can be the spark job?? For everything in get match_details / successful scrape
 # Read into big df and write to table
-@graph_asset
-def json_table(successful_scrapes: List[Dict]) -> List[str]:
-    return parse_json(demo_download(successful_scrapes))

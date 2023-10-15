@@ -1,15 +1,20 @@
 import time
 import re
+import os
 import undetected_chromedriver as uc
 
 from datetime import datetime
+from typing import List
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import undetected_chromedriver as uc
 from pydantic import Field
 
-from dagster import ConfigurableResource, get_dagster_logger
+from dagster import (
+    ConfigurableResource,
+    get_dagster_logger
+    )
 
 class HltvResource(ConfigurableResource):
     """Resource for scraping data from hltv.org."""
@@ -29,18 +34,59 @@ class HltvResource(ConfigurableResource):
         driver = uc.Chrome(options=options)
         return driver
 
+    @property
+    def base_url(self) -> str:
+        return "https://www.hltv.org"
+
+    def scrape_results(self, offset: int, browser_session: webdriver.Chrome) -> List[str]:
+        browser_session = self.driver # Sets it to own var as calls to self.driver will keep creating new instances
+        URL = f"{self.base_url}/results?offset={offset}"
+        # Get HTML doc for beautiful soup
+        browser_session.get(URL)
+        hltv_results = BeautifulSoup(browser_session.page_source, "html.parser")
+        # hltv_results = BeautifulSoup(results_page.text, "html.parser")
+        results = []
+        # Pull match link from html
+        for a in hltv_results.find_all("a", class_="a-reset"):
+            link = str(a.get("href"))
+
+            if link.startswith("/matches/"):
+                results.append(link)
+        return results
+
+    def get_results(self, num_of_results: int = 10):
+        browser_session = self.driver # Create browser session
+        browser_session.get(self.base_url)
+        print(f"did it work: {browser_session.title}")
+        # Generate list of offset values, 0 always included as this is the final results page
+        offset_values = [0]
+        while offset > 0:
+            offset_values.append(offset)
+            # Use 100 as this is equivalent to going to the next page on hltv results
+            offset -= 100
+
+        # Get match URLS, ~100 matches per page offset decreases by 100 until most recent page ie. offset=100
+        match_urls = []
+        for offset in offset_values:
+            match_urls += self.scrape_results(
+                offset=self.results_page_offset,
+                browser_session=browser_session
+                )
+            # remove duplicate matches
+            match_urls = list(set(match_urls))
+
+        browser_session.close()
+        return match_urls[:num_of_results]
 
     def scrape_match(self, match_url: str):
-        HLTV_ADDR = "https://www.hltv.org"
-
-        driver = self.driver # Sets it to own var as calls to self.driver will keep creating new instances
+        browser_session = self.driver # Sets it to own var as calls to self.driver will keep creating new instances
         match_id = re.search(r"\d+", match_url).group()
-        driver.get(f"{HLTV_ADDR}{match_url}")
+        browser_session.get(f"{self.base_url}{match_url}")
     
         # Wait for page to load if not fully loaded
         time.sleep(5)
 
-        match_details = BeautifulSoup(driver.page_source, "html.parser")
+        match_details = BeautifulSoup(browser_session.page_source, "html.parser")
         # get match_id from url
         try:
             team_box = match_details.find("div", class_="standard-box teamsBox")
@@ -62,7 +108,7 @@ class HltvResource(ConfigurableResource):
             unix_datetime_div = team_box.find("div", {"class": "time", "data-unix": True})
             unix_datetime = int(unix_datetime_div["data-unix"])
         except:
-            driver.close()
+            browser_session.close()
             demo_link = None
 
         try:
@@ -71,9 +117,9 @@ class HltvResource(ConfigurableResource):
             demo_a_tag = match_details.find("a", {"data-demo-link": True})
 
             demo_link = re.findall("\d+", demo_a_tag["data-demo-link"])[0]
-            driver.close()
+            browser_session.close()
         except:
-            driver.close()
+            browser_session.close()
             demo_link = None
 
         #type cast scores
@@ -101,3 +147,13 @@ class HltvResource(ConfigurableResource):
         }
 
         return match_data     
+
+    def download_demos(self, demo_id: int) -> None:
+        demo_url = f"{self.base_url}/download/demo/{demo_id}"
+        browser_session = self.driver
+
+        browser_session.get(demo_url)
+        browser_session.close()
+        # returning working dir to use for parser after
+        # TODO: Not sure if this is the 'dagster' way thinking that should be able to access the base_dir of I/O
+        return os.getcwd()
