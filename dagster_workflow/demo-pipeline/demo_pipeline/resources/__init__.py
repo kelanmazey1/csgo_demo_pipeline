@@ -1,0 +1,1 @@
+from .hltv import HltvResource
