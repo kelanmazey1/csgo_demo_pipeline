@@ -5,6 +5,7 @@ import undetected_chromedriver as uc
 
 from datetime import datetime
 from typing import List
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -60,20 +61,18 @@ class HltvResource(ConfigurableResource):
         print(f"did it work: {browser_session.title}")
         # Generate list of offset values, 0 always included as this is the final results page
         offset_values = [0]
-        while offset > 0:
-            offset_values.append(offset)
+        while self.results_page_offset > 0:
+            offset_values.append(self.results_page_offset)
             # Use 100 as this is equivalent to going to the next page on hltv results
-            offset -= 100
+            self.results_page_offset -= 100
 
         # Get match URLS, ~100 matches per page offset decreases by 100 until most recent page ie. offset=100
-        match_urls = []
-        for offset in offset_values:
-            match_urls += self.scrape_results(
-                offset=self.results_page_offset,
-                browser_session=browser_session
-                )
+        match_urls = self.scrape_results(
+            offset=self.results_page_offset,
+            browser_session=browser_session
+        )
             # remove duplicate matches
-            match_urls = list(set(match_urls))
+        match_urls = list(set(match_urls))
 
         browser_session.close()
         return match_urls[:num_of_results]
@@ -108,19 +107,18 @@ class HltvResource(ConfigurableResource):
             unix_datetime_div = team_box.find("div", {"class": "time", "data-unix": True})
             unix_datetime = int(unix_datetime_div["data-unix"])
         except:
-            browser_session.close()
             demo_link = None
 
         try:
             # get demo id
-            logger = get_dagster_logger()
             demo_a_tag = match_details.find("a", {"data-demo-link": True})
 
             demo_link = re.findall("\d+", demo_a_tag["data-demo-link"])[0]
-            browser_session.close()
+            
         except:
-            browser_session.close()
             demo_link = None
+
+        browser_session.close()
 
         #type cast scores
         team_a_score = int(team_a_score)
@@ -148,12 +146,24 @@ class HltvResource(ConfigurableResource):
 
         return match_data     
 
-    def download_demos(self, demo_id: int) -> None:
+    def download_demos(self, demo_id: int, outdir: str | Path  = '.') -> None:
         demo_url = f"{self.base_url}/download/demo/{demo_id}"
+        start_dir = os.getcwd()
+        os.chdir(outdir)
         browser_session = self.driver
 
         browser_session.get(demo_url)
+
+        files = os.listdir(os.curdir)
+        
+        # Wait for rar file to finish downloading 
+        while not any(file.endswith('.rar') for file in files):
+            # Refresh files var
+            files = os.listdir(os.curdir)
+            time.sleep(1)
+
         browser_session.close()
+        os.chdir(start_dir)
+
         # returning working dir to use for parser after
         # TODO: Not sure if this is the 'dagster' way thinking that should be able to access the base_dir of I/O
-        return os.getcwd()

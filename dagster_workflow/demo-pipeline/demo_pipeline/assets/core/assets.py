@@ -1,9 +1,9 @@
 import subprocess
-import os
 
 import patoolib
 import pandas as pd
 from ...resources import HltvResource
+from pathlib import Path
 from typing import List, Dict, Any
 from demo_pipeline.utils.get_matches import get_match_urls
 from demo_pipeline.utils.dl_unzip import dl_unzip
@@ -24,7 +24,7 @@ from dagster import (
 )
 def matches_on_results_page(hltv_scraper: HltvResource) -> Output[List[str]]:
     logger = get_dagster_logger()
-    results = hltv_scraper.get_results()
+    results = hltv_scraper.get_results(num_of_results=10)
     logger.info(results)
     return Output(
         value=results, metadata={"num_matches": len(results), "preview": results[:5]}
@@ -54,13 +54,15 @@ def match_details(
             success.append(match_data)
         else:
             failed.append(match_data)
-        
+
     context.add_output_metadata(
         metadata={
             "num_csgo_games": len([match for match in success if not match["is_cs2"]]),
             "num_cs2_games": len([match for match in success if match["is_cs2"]]),
-        }
-    )
+        },
+        output_name="successful_scrapes",
+    )      
+        
 
     return (Output(success, output_name="successful_scrapes", metadata={"number_of_success": len(success), "preview": success[:5]}), 
         Output(failed, output_name="failed_scrapes", metadata={"number_of_fails": len(failed), "preview": failed[:5]}))
@@ -70,37 +72,40 @@ def match_details(
 def retried_scrapes(failed_scrapes):
     pass
 
-@op(
-    io_manager_key="fs_io_manager",
-)
-def demo_download(successful_scrape: Dict[str, Any], hltv_scraper: HltvResource) -> str:
-    """ Returns a path to a directory of demo files, each directory represents a match """
+@asset
+def demo_download(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvResource):
+    """ Returns a list of paths to directories containing a .rar archive of demos from a csgo match """
+    logger = get_dagster_logger()
+    home_dir = Path.cwd()
+    archive_paths = []
     
-    if not successful_scrape["is_cs2"]:
-        hltv_scraper.download_demos(successful_scrape["demo_id"])
+    for scrape in successful_scrapes:
+        if not scrape["is_cs2"]:
+            demo_id = scrape["demo_id"]
+            
+            archive_dir = home_dir / 'demos' / str(demo_id)
+            archive_dir.mkdir(parents=True, exist_ok=False)
+            
+            hltv_scraper.download_demos(demo_id, outdir=archive_dir.resolve())
 
-@op(
-    io_manager_key="fs_io_manager",
-    deps=[demo_download],
-)
-def demo_jsons() -> None:
-    """ Uses go script to parse demo files to json, leaves a json in match directory renamed to match and map """
-    # Read in .rar file with io
-    rar_files = [x for x in os.listdir(".") if x.endswith(".rar")]
-    if len(rar_files) > 1:
-        raise FileExistsError("More than 2 .rar files have been found, expected only 1")
+            logger.info(f"downloading {scrape['team_a']} vs {scrape['team_b']}")
+            
+            archive_paths.append(archive_dir.resolve())
     
-    # Unzip archive
-    patoolib.extract_archive(rar_files[0], outdir=".")
+    return archive_paths
+
+# @asset
+# def demo_jsons() -> None:
+#     """ Uses go script to parse demo files to json, leaves a json in match directory renamed to match and map """
+#     # Read in .rar file with io
+#     rar_files = [x for x in os.listdir(".") if x.endswith(".rar")]
+#     if len(rar_files) > 1:
+#         raise FileExistsError("More than 2 .rar files have been found, expected only 1")
+    
+#     # Unzip archive
+#     patoolib.extract_archive(rar_files[0], outdir=".")
 
     
-
-
-
-    
-@graph_asset
-def json_table(successful_scrapes: List[Dict[str, Any]]) -> List[str]:
-    pass
 
 
 
