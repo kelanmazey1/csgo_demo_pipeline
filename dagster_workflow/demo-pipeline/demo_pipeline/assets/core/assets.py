@@ -73,7 +73,7 @@ def retried_scrapes(failed_scrapes):
     pass
 
 @asset
-def demo_download(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvResource):
+def demo_archives(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvResource):
     """ Returns a list of paths to directories containing a .rar archive of demos from a csgo match """
     logger = get_dagster_logger()
     home_dir = Path.cwd()
@@ -94,18 +94,28 @@ def demo_download(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvRe
     
     return archive_paths
 
-# @asset
-# def demo_jsons() -> None:
-#     """ Uses go script to parse demo files to json, leaves a json in match directory renamed to match and map """
-#     # Read in .rar file with io
-#     rar_files = [x for x in os.listdir(".") if x.endswith(".rar")]
-#     if len(rar_files) > 1:
-#         raise FileExistsError("More than 2 .rar files have been found, expected only 1")
+@asset
+def demo_jsons(demo_archives: List[Path]) -> None:
+    """ Uses go script to parse demo files to json, leaves a json in match directory renamed to match and map """
+    # Read in .rar file with io
+    for archive_path in demo_archives:
+        rar_files = [x for x in archive_path.glob("*.rar")]
+        if len(rar_files) > 1:
+            raise FileExistsError("More than 2 .rar files have been found, expected only 1")
     
-#     # Unzip archive
-#     patoolib.extract_archive(rar_files[0], outdir=".")
+        # Unzip archive
+        patoolib.extract_archive(rar_files[0], outdir=".")
 
-    
+        for demo_file in archive_path.glob("*.dem"):
+            subprocess.run(
+                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_file.resolve(),   "./"]
+                )
+            output_json = demo_file.parent.absolute() / 'output.json'
+            output_json.rename(demo_file.stem)
+            # Delete demo file after parsed to json
+            demo_file.unlink()
+        # Delete archive once done
+        rar_files[0].unlink()
 
 
 

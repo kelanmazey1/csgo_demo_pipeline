@@ -148,6 +148,7 @@ class HltvResource(ConfigurableResource):
 
     def download_demos(self, demo_id: int, outdir: str | Path  = '.') -> None:
         demo_url = f"{self.base_url}/download/demo/{demo_id}"
+        # This has to be done because using scraper means download starts in whatever dir currently in
         start_dir = os.getcwd()
         os.chdir(outdir)
         browser_session = self.driver
