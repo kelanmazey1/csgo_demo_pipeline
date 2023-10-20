@@ -56,6 +56,7 @@ class HltvResource(ConfigurableResource):
         return results
 
     def get_results(self, num_of_results: int = 10):
+        """ Gets a specified number of results from hltv results page """
         browser_session = self.driver # Create browser session
         browser_session.get(self.base_url)
         print(f"did it work: {browser_session.title}")

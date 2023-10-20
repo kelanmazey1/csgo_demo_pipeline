@@ -6,6 +6,7 @@ demo_dump/*
 
 secrets/*
 archive/*
+build/*
 
 dagster_workflow/assets/functions/__pycache__/*
 dagster_workflow/assets/chromedriver

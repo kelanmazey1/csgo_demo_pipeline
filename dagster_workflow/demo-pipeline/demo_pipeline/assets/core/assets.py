@@ -5,14 +5,10 @@ import pandas as pd
 from ...resources import HltvResource
 from pathlib import Path
 from typing import List, Dict, Any
-from demo_pipeline.utils.get_matches import get_match_urls
-from demo_pipeline.utils.dl_unzip import dl_unzip
 
 from dagster import (
     asset,
-    op,
     Output,
-    graph_asset,
     multi_asset,
     AssetOut,
     AssetExecutionContext,
@@ -85,7 +81,6 @@ def demo_archives(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvRe
             
             archive_dir = home_dir / 'demos' / str(demo_id)
             archive_dir.mkdir(parents=True, exist_ok=False)
-            
             hltv_scraper.download_demos(demo_id, outdir=archive_dir.resolve())
 
             logger.info(f"downloading {scrape['team_a']} vs {scrape['team_b']}")
@@ -102,13 +97,16 @@ def demo_jsons(demo_archives: List[Path]) -> None:
         rar_files = [x for x in archive_path.glob("*.rar")]
         if len(rar_files) > 1:
             raise FileExistsError("More than 2 .rar files have been found, expected only 1")
-    
+
+        # Keep everything pertaining to one match in same dir
+        host_directory = archive_path.resolve()
+
         # Unzip archive
-        patoolib.extract_archive(rar_files[0], outdir=".")
+        patoolib.extract_archive(rar_files[0], outdir=host_directory)
 
         for demo_file in archive_path.glob("*.dem"):
             subprocess.run(
-                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_file.resolve(),   "./"]
+                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_file.resolve(), host_directory]
                 )
             output_json = demo_file.parent.absolute() / 'output.json'
             output_json.rename(demo_file.stem)
