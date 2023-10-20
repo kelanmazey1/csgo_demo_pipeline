@@ -14,33 +14,48 @@ from pydantic import Field
 
 from dagster import (
     ConfigurableResource,
-    get_dagster_logger
     )
+
 
 class HltvResource(ConfigurableResource):
     """Resource for scraping data from hltv.org."""
 
+    # TODO: Worth considering if these should stay as attributes or just be given as args to method calls instead
     results_page_offset: int = Field(
         description=(
-            "The offset for the results page on hltv, is the number of results from the most recent result to start listing matches from."
+            """The offset for the results page on hltv, is the number of results from the most recent result to start listing matches from.
+            Mainly used for debugging to get a certain result set or when backfilling historical matches."""
         ),
         default=0
     )
 
+    single_results_page: bool = Field(
+        description=(
+            """When scraping the results page should just that results page be scraped or should scraping continue until the most recent results.
+            Mainly used for debugging to get a certain result set or when backfilling historical matches."""
+        ),
+        default=True
+    )
+
     @property
-    def driver(self) -> webdriver.Chrome:
+    def base_url(self) -> str:
+        return "https://www.hltv.org"
+    
+    def clean_up_chromedrivers(self) -> None:
+        """ Searches current directory and down for chromedriver files that have been created and removes them """
+        wild_chromedrivers = [x for x in Path(".").rglob("*") if x ==  "chromedriver"]
+        for chromedriver in wild_chromedrivers:
+            chromedriver.unlink()
+
+    def start_browser_session(self) -> webdriver.Chrome:
         options = uc.ChromeOptions()
         options.add_argument("--headless")
         options.add_argument("--disable-dev-shm-usage")
         driver = uc.Chrome(options=options)
         return driver
 
-    @property
-    def base_url(self) -> str:
-        return "https://www.hltv.org"
-
     def scrape_results(self, offset: int, browser_session: webdriver.Chrome) -> List[str]:
-        browser_session = self.driver # Sets it to own var as calls to self.driver will keep creating new instances
+        browser_session = self.start_browser_session() # Sets it to own var as calls to self.start_browser_session() will keep creating new instances
         URL = f"{self.base_url}/results?offset={offset}"
         # Get HTML doc for beautiful soup
         browser_session.get(URL)
@@ -57,29 +72,36 @@ class HltvResource(ConfigurableResource):
 
     def get_results(self, num_of_results: int = 10):
         """ Gets a specified number of results from hltv results page """
-        browser_session = self.driver # Create browser session
+        browser_session = self.start_browser_session() # Create browser session
         browser_session.get(self.base_url)
-        print(f"did it work: {browser_session.title}")
-        # Generate list of offset values, 0 always included as this is the final results page
-        offset_values = [0]
-        while self.results_page_offset > 0:
-            offset_values.append(self.results_page_offset)
-            # Use 100 as this is equivalent to going to the next page on hltv results
-            self.results_page_offset -= 100
 
+        # Generate list of offset values, 0 always included as this is the final results page
+        if self.single_results_page:
+            offset_values = [self.results_page_offset]
+        else:
+            offset_values = [0]
+            while self.results_page_offset > 0:
+                offset_values.append(self.results_page_offset)
+                # Use 100 as this is equivalent to going to the next page on hltv results
+                self.results_page_offset -= 100
+        
+        match_urls = []
+        print(offset_values)    
         # Get match URLS, ~100 matches per page offset decreases by 100 until most recent page ie. offset=100
-        match_urls = self.scrape_results(
-            offset=self.results_page_offset,
-            browser_session=browser_session
-        )
-            # remove duplicate matches
+        for offset in offset_values:
+            match_urls += self.scrape_results(
+                offset=offset,
+                browser_session=browser_session
+            )
+
+        # remove duplicate matches
         match_urls = list(set(match_urls))
 
         browser_session.close()
         return match_urls[:num_of_results]
 
     def scrape_match(self, match_url: str):
-        browser_session = self.driver # Sets it to own var as calls to self.driver will keep creating new instances
+        browser_session = self.start_browser_session() # Sets it to own var as calls to self.start_browser_session() will keep creating new instances
         match_id = re.search(r"\d+", match_url).group()
         browser_session.get(f"{self.base_url}{match_url}")
     
@@ -113,7 +135,6 @@ class HltvResource(ConfigurableResource):
         try:
             # get demo id
             demo_a_tag = match_details.find("a", {"data-demo-link": True})
-
             demo_link = re.findall("\d+", demo_a_tag["data-demo-link"])[0]
             
         except:
@@ -152,8 +173,7 @@ class HltvResource(ConfigurableResource):
         # This has to be done because using scraper means download starts in whatever dir currently in
         start_dir = os.getcwd()
         os.chdir(outdir)
-        browser_session = self.driver
-
+        browser_session = self.start_browser_session()
         browser_session.get(demo_url)
 
         files = os.listdir(os.curdir)
@@ -166,6 +186,3 @@ class HltvResource(ConfigurableResource):
 
         browser_session.close()
         os.chdir(start_dir)
-
-        # returning working dir to use for parser after
-        # TODO: Not sure if this is the 'dagster' way thinking that should be able to access the base_dir of I/O

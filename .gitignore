@@ -12,7 +12,7 @@ dagster_workflow/assets/functions/__pycache__/*
 dagster_workflow/assets/chromedriver
 dagster_workflow/demo-pipeline/data/*
 dagster_workflow/demo-pipeline/dagster-dev/*
-dagster_workflow/demo-pipeline/dagster-dev-venv/*
+dagster_workflow/demo-pipeline/dagster-dev-venv
 dagster_workflow/demo-pipeline/build/*
 dagster_workflow/demo-pipeline/demo_pipeline/__pycache__/
 dagster_workflow/demo-pipeline/chromedriver

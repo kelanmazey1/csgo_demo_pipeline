@@ -17,7 +17,7 @@ fs_io_manager = FilesystemIOManager(
     base_dir="data",
 )
 
-hltv = HltvResource()
+hltv = HltvResource(results_page_offset=1000)
 
 defs = Definitions(
     assets=all_assets,

@@ -20,7 +20,7 @@ from dagster import (
 )
 def matches_on_results_page(hltv_scraper: HltvResource) -> Output[List[str]]:
     logger = get_dagster_logger()
-    results = hltv_scraper.get_results(num_of_results=10)
+    results = hltv_scraper.get_results(num_of_results=1)
     logger.info(results)
     return Output(
         value=results, metadata={"num_matches": len(results), "preview": results[:5]}
@@ -105,15 +105,21 @@ def demo_jsons(demo_archives: List[Path]) -> None:
         patoolib.extract_archive(rar_files[0], outdir=host_directory)
 
         for demo_file in archive_path.glob("*.dem"):
+            print(demo_file.resolve())
+            print(host_directory)
+            
+            output_path = demo_file.parent.resolve() / demo_file.stem
+            
             subprocess.run(
-                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_file.resolve(), host_directory]
+                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_file.resolve(), output_path.with_suffix(".json")]
                 )
-            output_json = demo_file.parent.absolute() / 'output.json'
-            output_json.rename(demo_file.stem)
+
             # Delete demo file after parsed to json
             demo_file.unlink()
         # Delete archive once done
         rar_files[0].unlink()
+
+
 
 
 
