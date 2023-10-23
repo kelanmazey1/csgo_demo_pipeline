@@ -163,7 +163,6 @@ class HltvResource(ConfigurableResource):
             "date": datetime.utcfromtimestamp(unix_datetime / 1000).strftime('%Y-%m-%dT%H:%M:%SZ'),
             "demo_id": False if demo_link is None else int(demo_link),
             "maps_played": maps_played,
-            "is_cs2": is_cs2,
         }
 
         return match_data     

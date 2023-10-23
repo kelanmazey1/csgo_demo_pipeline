@@ -12,10 +12,31 @@ import (
 	events "github.com/markus-wa/demoinfocs-golang/v3/pkg/demoinfocs/events"
 )
 
+func check_demo_type(f os.File) {
+	// TODO: In future split this out and point to 2 different parsers one for cs2 and one for csgo
+	// currently just getting set up for csgo
+	demo_type := make([]byte, 8)
+	num_of_bytes, err := f.Read(demo_type)
+
+	var is_cs2 bool
+
+	if err != nil {
+		log.Panic("failed to open demo file: ", err)
+	}
+
+	// If demo isn't for csgo close file and exit program
+	if string(demo_type[:num_of_bytes]) = "HL2DEMO" {
+		is_cs2 = false
+	} else {
+		is_cs2 = true
+	}
+	return is_cs2
+
+}
+
 func main() {
 
 	// Should only be passed two args which is path to demo_file, assumes that outfile has '/' at the end
-	// TODO: Actually handle and check if out dir is available
 	demo_path := os.Args[1]
 	outpath_arg := os.Args[2]
 
@@ -24,6 +45,12 @@ func main() {
 	outpath.WriteString(outpath_arg)
 
 	f, err := os.Open(demo_path)
+	
+	is_cs2 := check_demo_type(f)
+
+	if is_cs2 {
+		return
+	}
 
 	if err != nil {
 		log.Panic("failed to open demo file: ", err)

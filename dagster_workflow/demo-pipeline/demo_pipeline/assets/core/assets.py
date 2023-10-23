@@ -76,16 +76,14 @@ def demo_archives(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvRe
     archive_paths = []
     
     for scrape in successful_scrapes:
-        if not scrape["is_cs2"]:
-            demo_id = scrape["demo_id"]
-            
-            archive_dir = home_dir / 'demos' / str(demo_id)
-            archive_dir.mkdir(parents=True, exist_ok=False)
-            hltv_scraper.download_demos(demo_id, outdir=archive_dir.resolve())
-
-            logger.info(f"downloading {scrape['team_a']} vs {scrape['team_b']}")
-            
-            archive_paths.append(archive_dir.resolve())
+        demo_id = scrape["demo_id"]
+        
+        archive_dir = home_dir / 'demos' / str(demo_id)
+        archive_dir.mkdir(parents=True, exist_ok=False)
+        hltv_scraper.download_demos(demo_id, outdir=archive_dir.resolve())
+        logger.info(f"downloading {scrape['team_a']} vs {scrape['team_b']}")
+        
+        archive_paths.append(archive_dir.resolve())
     
     return archive_paths
 
@@ -105,8 +103,6 @@ def demo_jsons(demo_archives: List[Path]) -> None:
         patoolib.extract_archive(rar_files[0], outdir=host_directory)
 
         for demo_file in archive_path.glob("*.dem"):
-            print(demo_file.resolve())
-            print(host_directory)
             
             output_path = demo_file.parent.resolve() / demo_file.stem
             
@@ -119,34 +115,3 @@ def demo_jsons(demo_archives: List[Path]) -> None:
         # Delete archive once done
         rar_files[0].unlink()
 
-
-
-
-
-# # TODO: Actually just return a single JSON file, as the file is the asset 
-# @op(
-#     out=Out(
-#         io_manager_key="fs_io_manager",
-#         is_required=True,
-#         )
-# )
-# def parse_json(demo_dir: str) -> List[pd.DataFrame]:
-#     output = []
-#     # Run golang parser
-#     for file_path in demo_dir:
-#         for file in os.listdir(file_path):
-#             demo_path = os.file_path.join(file_path, file)
-#             print(demo_path)
-#             subprocess.run(
-#                     ["./demo_pipeline/utils/demo_parse/parse_demo", demo_path, "./"]
-#                 )
-#             # TODO: store JSONs somewhere after parse as currently overwrites each time in loop
-#             # thinking best way is something like duckdb for local? Maybe just to file storage
-#             df = pd.read_json("./data/output.json")
-#             output.append(df)
-
-#     # Return something like, json.loads(output.json)
-#     return output
-
-# This can be the spark job?? For everything in get match_details / successful scrape
-# Read into big df and write to table
