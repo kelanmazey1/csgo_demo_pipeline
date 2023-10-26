@@ -6,18 +6,20 @@ from dagster import (
 from .resources import HltvResource
 
 from .assets import (
-    core_assets
+    demo_collection_assets,
+    load_demo_assets,
 )
 
 all_assets = [
-    *core_assets
+    *demo_collection_assets,
+    *load_demo_assets,
 ]
 
 fs_io_manager = FilesystemIOManager(
     base_dir="data",
 )
 
-hltv = HltvResource(results_page_offset=1000)
+hltv = HltvResource(results_page_offset=1000, single_results_page=True)
 
 defs = Definitions(
     assets=all_assets,

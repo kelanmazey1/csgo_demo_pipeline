@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -12,10 +13,10 @@ import (
 	events "github.com/markus-wa/demoinfocs-golang/v3/pkg/demoinfocs/events"
 )
 
-func check_demo_type(f os.File) {
+func is_demo_cs2(f *os.File) bool {
 	// TODO: In future split this out and point to 2 different parsers one for cs2 and one for csgo
 	// currently just getting set up for csgo
-	demo_type := make([]byte, 8)
+	demo_type := make([]byte, 7)
 	num_of_bytes, err := f.Read(demo_type)
 
 	var is_cs2 bool
@@ -25,11 +26,18 @@ func check_demo_type(f os.File) {
 	}
 
 	// If demo isn't for csgo close file and exit program
-	if string(demo_type[:num_of_bytes]) = "HL2DEMO" {
+	if string(demo_type[:num_of_bytes]) == "HL2DEMO" {
 		is_cs2 = false
 	} else {
 		is_cs2 = true
 	}
+
+	// Repointing reader to start for parser to actually use
+	// Parser actually already checks first 8 bytes for this but it is called as part of creating the parser
+	// so not 100% sure it's completely suited.
+
+	f.Seek(0, io.SeekStart)
+
 	return is_cs2
 
 }
@@ -45,9 +53,8 @@ func main() {
 	outpath.WriteString(outpath_arg)
 
 	f, err := os.Open(demo_path)
-	
-	is_cs2 := check_demo_type(f)
 
+	is_cs2 := is_demo_cs2(f)
 	if is_cs2 {
 		return
 	}
@@ -62,6 +69,7 @@ func main() {
 
 	match_start := false
 	events_map := make(map[string][]interface{})
+
 	// Update match_start, don't want to include warm up events
 	p.RegisterEventHandler(func(e events.IsWarmupPeriodChanged) {
 		if e.NewIsWarmupPeriod == false && e.OldIsWarmupPeriod == true {

@@ -24,7 +24,7 @@ class HltvResource(ConfigurableResource):
     results_page_offset: int = Field(
         description=(
             """The offset for the results page on hltv, is the number of results from the most recent result to start listing matches from.
-            Mainly used for debugging to get a certain result set or when backfilling historical matches."""
+            Mainly used for testing & debugging to get a certain result set or when backfilling historical matches."""
         ),
         default=0
     )
@@ -32,7 +32,7 @@ class HltvResource(ConfigurableResource):
     single_results_page: bool = Field(
         description=(
             """When scraping the results page should just that results page be scraped or should scraping continue until the most recent results.
-            Mainly used for debugging to get a certain result set or when backfilling historical matches."""
+            Mainly used for testing & debugging to get a certain result set or when backfilling historical matches."""
         ),
         default=True
     )
@@ -43,7 +43,7 @@ class HltvResource(ConfigurableResource):
     
     def clean_up_chromedrivers(self) -> None:
         """ Searches current directory and down for chromedriver files that have been created and removes them """
-        wild_chromedrivers = [x for x in Path(".").rglob("*") if x ==  "chromedriver"]
+        wild_chromedrivers = [x for x in Path(".").rglob("*") if x.stem == "chromedriver"]
         for chromedriver in wild_chromedrivers:
             chromedriver.unlink()
 
@@ -149,8 +149,6 @@ class HltvResource(ConfigurableResource):
 
         # bo1 so score will be the rounds won which will be 16 minimum
         maps_played = 1 if team_a_score + team_b_score >= 16 else team_a_score + team_b_score
-
-        is_cs2 = "Counter-Strike 2" in match_footnotes
 
         match_data = {
             "hltv_id": int(match_id),
