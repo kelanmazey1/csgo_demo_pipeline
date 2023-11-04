@@ -59,16 +59,16 @@ def retried_scrapes(failed_scrapes):
     pass
 
 @asset
-def demo_archives(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvResource):
+def demo_archives(successful_scrapes: List[Dict[str, Any]], hltv_scraper: HltvResource) -> List[Path]:
     """ Returns a list of paths to directories containing a .rar archive of demos from a csgo match """
     logger = get_dagster_logger()
-    home_dir = Path.cwd()
+    root_dir = Path.cwd()
     archive_paths = []
     
     for scrape in successful_scrapes:
         demo_id = scrape["demo_id"]
         
-        archive_dir = home_dir / 'demos' / str(demo_id)
+        archive_dir = root_dir / 'demos' / str(demo_id)
         archive_dir.mkdir(parents=True, exist_ok=False)
         hltv_scraper.download_demos(demo_id, outdir=archive_dir.resolve())
         logger.info(f"downloading {scrape['team_a']} vs {scrape['team_b']}")
@@ -98,10 +98,11 @@ def demo_jsons(demo_archives: List[Path]) -> None:
 
         for demo_file in archive_path.glob("*.dem"):
             
-            output_path = demo_file.parent.resolve() / demo_file.stem
+
+            output_path = demo_file.parent / (demo_file.stem + ".json")
             logger.info(f"{demo_file.resolve()} being processed")
             subprocess.run(
-                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_file.resolve(), output_path.with_suffix(".json")]
+                    ["./demo_pipeline/utils/demo_parse/parse_demo", demo_file.resolve(), output_path]
                 )
 
             # Delete demo file after parsed to json

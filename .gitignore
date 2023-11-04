@@ -2,7 +2,8 @@
 
 demo_dump/*
 *.dem
-*/*.dem
+*.json
+*.parquet
 
 secrets/*
 archive/*
@@ -23,3 +24,4 @@ dagster_workflow/demo-pipeline/demo_pipeline/functions/demo_parse/parse_demo
 dagster_workflow/demo-pipeline/data/matches_on_results_page
 dagster_workflow/demo-pipeline/demo_pipeline/assets/core/__pycache__/
 
+dagster_workflow/demo-pipeline/demo_pipeline/assets/__pycache__/__init__.cpython-310.pyc

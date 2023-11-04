@@ -1,4 +1,4 @@
-from dagster import Definitions, load_assets_from_package_module
+from dagster import load_assets_from_package_module
 
 from . import demo_collection, load_demo
 

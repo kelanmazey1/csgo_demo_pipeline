@@ -78,7 +78,9 @@ func main() {
 	})
 	game_round := 1
 	p.RegisterEventHandler(func(score events.ScoreUpdated) {
-		game_round++
+		if match_start {
+			game_round++
+		}
 	})
 
 	// Register handler for kills include position,
