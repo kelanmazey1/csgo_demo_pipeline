@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	r3 "github.com/golang/geo/r3"
-	dem "github.com/markus-wa/demoinfocs-golang/v3/pkg/demoinfocs"
-	events "github.com/markus-wa/demoinfocs-golang/v3/pkg/demoinfocs/events"
+	dem "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs"
+	events "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/events"
 )
 
 func is_demo_cs2(f *os.File) bool {
@@ -45,8 +45,8 @@ func is_demo_cs2(f *os.File) bool {
 func main() {
 
 	// Should only be passed two args which is path to demo_file, assumes that outfile has '/' at the end
-	demo_path := os.Args[1]
-	outpath_arg := os.Args[2]
+	demo_path := "/home/kelan/go_test/csgo/heroic-vs-gamerlegion-m2-inferno.dem"
+	outpath_arg := "./test.json"
 
 	var outpath strings.Builder
 
@@ -76,12 +76,8 @@ func main() {
 			match_start = true
 		}
 	})
-	game_round := 1
-	p.RegisterEventHandler(func(score events.ScoreUpdated) {
-		if match_start {
-			game_round++
-		}
-	})
+
+	game_round := 0
 
 	// Register handler for kills include position,
 	p.RegisterEventHandler(func(e events.Kill) {
@@ -198,6 +194,16 @@ func main() {
 			}
 
 			events_map["player_damaged"] = append(events_map["player_damage"], player_hurt_map)
+		}
+	})
+	// Using equipment value freeze time end, mainly going to be used to tell if round is buy round of eco
+	// Because of this don't need to know what was bought. Kills kind of covers how weapons are used
+	p.RegisterEventHandler(func(score events.ScoreUpdated) {
+		if match_start {
+			game_round++
+			for _, pl := range p.GameState().Participants().Playing() {
+				fmt.Printf("%s has %d worth of equipment in round %d\n", pl.Name, pl.EquipmentValueFreezeTimeEnd(), game_round)
+			}
 		}
 	})
 
