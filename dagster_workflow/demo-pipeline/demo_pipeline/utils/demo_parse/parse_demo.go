@@ -185,7 +185,7 @@ func main() {
 				"attacker_pos":    attacker_pos,
 				"player_hurt":     player_hurt,
 				"attacker":        attacker,
-				"health":          ph.HealthDamage,
+				"health":          ph.Health,
 				"armor":           ph.Armor,
 				"health_damage":   ph.HealthDamage,
 				"armor_damage":    ph.ArmorDamage,
@@ -196,14 +196,28 @@ func main() {
 			events_map["player_damaged"] = append(events_map["player_damage"], player_hurt_map)
 		}
 	})
-	// Using equipment value freeze time end, mainly going to be used to tell if round is buy round of eco
-	// Because of this don't need to know what was bought. Kills kind of covers how weapons are used
+	// Using equipment value freeze time end, mainly going to be used to tell if round is buy round or eco
+	// Because of this don't need to know what was bought. Kills kind of covers how weapons are used.
 	p.RegisterEventHandler(func(score events.ScoreUpdated) {
 		if match_start {
+			// This doesn't seem to be fully accurate despite notes in the docs about it being the way to monitor game round.
+			// Could look into it but won't provide much value, the round should be used as a key across the different events recorded.
 			game_round++
+			var econ_map map[string]interface{}
 			for _, pl := range p.GameState().Participants().Playing() {
 				fmt.Printf("%s has %d worth of equipment in round %d\n", pl.Name, pl.EquipmentValueFreezeTimeEnd(), game_round)
+				econ_map = map[string]interface{}{
+					"round":         game_round,
+					"player":        pl.Name,
+					"weapons_value": pl.EquipmentValueFreezeTimeEnd(),
+					"inventory":     pl.Inventory,
+					"team_econ":     pl.TeamState.FreezeTimeEndEquipmentValue(),
+					"team":          pl.TeamState.ClanName(),
+					"team_game_id":  pl.TeamState.ID(),
+				}
 			}
+
+			events_map["economy"] = append(events_map["economy"], econ_map)
 		}
 	})
 
