@@ -89,6 +89,31 @@ def demo_long_staging() -> DataFrame:
     
     # Do transform, tag match ID on. Transform dataframe to wide format
     # write out to duckdb with built in duckdbpyspark manager
+
+    # nades = df.select(
+#     df["grenades.grenade"],
+#     df["grenades.grenade_position"],
+#     df["grenades.grenade_thrower"],
+#     df["grenades.grenade_thrower_pos"],
+#     df["grenades.grenade_type"],
+#     df["grenades.round"],
+#     )
+# #e flattened data
+# nades.show()
+
+# nades_flat = nades.withColumn("new", F.arrays_zip("grenade", "grenade_position", "grenade_thrower", "grenade_thrower_pos", "grenade_type", "round")) \
+#                   .withColumn("new", F.explode("new")) \
+#                   .select(
+#                       F.col("new.grenade").alias("grenade"),
+#                       F.col("new.grenade_position").alias("grenade_position"),
+#                       F.col("new.grenade_thrower").alias("grenade_thrower"),
+#                       F.col("new.grenade_thrower_pos").alias("grenade_thrower_pos"),
+#                       F.col("new.grenade_type").alias("grenade_type"),
+#                       F.col("new.round").alias("round"),
+#                       )
+
+# nades_flat.show()
+
     
     return df
 
