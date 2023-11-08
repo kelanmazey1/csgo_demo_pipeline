@@ -45,8 +45,8 @@ func is_demo_cs2(f *os.File) bool {
 func main() {
 
 	// Should only be passed two args which is path to demo_file, assumes that outfile has '/' at the end
-	demo_path := /*os.Args[1]*/ "/home/kelanmazey/csgo_demo_pipeline/dagster_workflow/demo-pipeline/demos/82330/bravado-vs-goliath-m1-anubis.dem"
-	outpath_arg := /*os.Args[2]*/ "./test.json"
+	demo_path := os.Args[1]   //"/home/kelanmazey/csgo_demo_pipeline/dagster_workflow/demo-pipeline/demos/82330/bravado-vs-goliath-m1-anubis.dem"
+	outpath_arg := os.Args[2] //"./test.json"
 
 	var outpath strings.Builder
 
@@ -206,7 +206,6 @@ func main() {
 			var econ_map map[string]interface{}
 			// should probably use this m_unFreezetimeEndEquipmentValue property can then get value / equipment when freeze time ends if can't find a suitable event
 			for _, pl := range p.GameState().Participants().Playing() {
-				fmt.Printf("%s has %d worth of equipment in round %d\n", pl.Name, pl.EquipmentValueFreezeTimeEnd(), game_round)
 
 				var items []string
 

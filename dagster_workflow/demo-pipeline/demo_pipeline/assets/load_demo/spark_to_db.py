@@ -9,24 +9,6 @@ from dagster import (
     Output,
     Definitions,
 )
-
-@asset(deps=["demo_jsons"], io_manager_key="spark_io_manager")
-def demo_long_staging() -> DataFrame:
-    # Get demos dir
-    demos_dir = Path.cwd() / "demos"
-    
-    if not demos_dir.exists():
-        raise FileNotFoundError("No demo's directory")
-
-    spark = SparkSession.builder.getOrCreate()
-    files_to_read = []
-    for f in demos_dir.rglob("*.json"):
-        files_to_read.append(str(f.resolve()))
-    
-    df = spark.read.json(files_to_read)
-
-    print(df.schema.fields)
-
     #      |-- grenades: array (nullable = true)
     #  |    |-- element: struct (containsNull = true)
     #  |    |    |-- grenade: string (nullable = true)
@@ -87,41 +69,36 @@ def demo_long_staging() -> DataFrame:
     #  |    |    |    |-- Z: double (nullable = true)
     #  |    |    |-- weapon: string (nullable = true)
     
-    # Do transform, tag match ID on. Transform dataframe to wide format
-    # write out to duckdb with built in duckdbpyspark manager
+@asset(deps=["demo_jsons"], io_manager_key="spark_io_manager")
+def demo_long_staging() -> DataFrame:
+    # Get demos dir
+    demos_dir = Path.cwd() / "demos"
+    
+    if not demos_dir.exists():
+        raise FileNotFoundError("No demo's directory")
 
-    # nades = df.select(
-#     df["grenades.grenade"],
-#     df["grenades.grenade_position"],
-#     df["grenades.grenade_thrower"],
-#     df["grenades.grenade_thrower_pos"],
-#     df["grenades.grenade_type"],
-#     df["grenades.round"],
-#     )
-# #e flattened data
-# nades.show()
+    spark = SparkSession.builder.getOrCreate()
 
-df_out = spark.createDataFrame
 
-def explode_second_level(second_level);
-    for col in second_level:
-        df.withColumn("new", F.arrays_zip(col)) \
-          .withColumn("new", F.explode("new")) \
-          .select(f"new.{col}").alias(col)
+    
+    for f in demos_dir.rglob("*.json"):
+        df = spark.read.json(str(f))
 
-# nades_flat = nades.withColumn("new", F.arrays_zip("grenade", "grenade_position", "grenade_thrower", "grenade_thrower_pos", "grenade_type", "round")) \
-#                   .withColumn("new", F.explode("new")) \
-#                   .select(
-#                       F.col("new.grenade").alias("grenade"),
-#                       F.col("new.grenade_position").alias("grenade_position"),
-#                       F.col("new.grenade_thrower").alias("grenade_thrower"),
-#                       F.col("new.grenade_thrower_pos").alias("grenade_thrower_pos"),
-#                       F.col("new.grenade_type").alias("grenade_type"),
-#                       F.col("new.round").alias("round"),
-#                       )
+    # Have keys as main topics ie. nades, kills and sub cols as list of vals to unpack when array zip
+    json_dict = {
+        "grenades": ["grenade", "grenade_position", "grenade_thrower", "grenade_thrower_pos", "grenade_type", "round"],
+    }
 
-# nades_flat.show()
+    for main_topic, sub_topic_list in json_dict.items():
+        # This is so we can read subcols for main topic, only need one level deep. In theory could be done recursively but wasn't worth the effor to work out how to traverse schema
+        cols_to_select = [f"{main_topic}.{sub_topic}" for sub_topic in sub_topic_list]
+        sub_df = df.select(cols_to_select)
+        sub_flat = sub_df.withColumn("zipped", F.arrays_zip(*sub_topic_list)) \
+                  .withColumn("zipped", F.explode("zipped")) \
+                  .select([f"zipped.{sub_topic}" for sub_topic in sub_topic_list])
+        sub_flat.show()
 
+    
     
     return df
 
