@@ -106,6 +106,6 @@ def demo_jsons(demo_archives: List[Path]) -> None:
                 )
 
             # Delete demo file after parsed to json
-            demo_file.unlink()
+            # demo_file.unlink()
         # Delete archive once done
-        rar_files[0].unlink()
+        # rar_files[0].unlink()
