@@ -8,7 +8,12 @@ RUN apt-get update && \
 
 # Get chrome chromedriver for Selenium
 ARG CHROME_VERSION="113.0.5672.92-1"
+# Think I will have to use this one with latest version of selenium, will work it out when done with most of dev
+ARG CHROME_VERSION="114.0.5735.90-1" 
 # VERSION installed locally 114.0.5735.90-1
+
+# Need unrar for unpacking demos
+RUN apt install unrar
 
 RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
   && apt install -y /tmp/chrome.deb \

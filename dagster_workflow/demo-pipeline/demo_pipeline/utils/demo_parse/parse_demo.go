@@ -45,8 +45,8 @@ func is_demo_cs2(f *os.File) bool {
 func main() {
 
 	// Should only be passed two args which is path to demo_file, assumes that outfile has '/' at the end
-	demo_path := os.Args[1]   //"/home/kelan/go_test/csgo/heroic-vs-gamerlegion-m2-inferno.dem"
-	outpath_arg := os.Args[2] //"./test.json"
+	demo_path := /*os.Args[1]*/ "/home/kelanmazey/csgo_demo_pipeline/dagster_workflow/demo-pipeline/demos/82330/bravado-vs-goliath-m1-anubis.dem"
+	outpath_arg := /*os.Args[2]*/ "./test.json"
 
 	var outpath strings.Builder
 
@@ -200,36 +200,53 @@ func main() {
 	})
 	// Using equipment value freeze time end, mainly going to be used to tell if round is buy round or eco
 	// Because of this don't need to know what was bought. Kills kind of covers how weapons are used.
-	p.RegisterEventHandler(func(score events.RoundStart) {
+	p.RegisterEventHandler(func(ge events.RoundFreezetimeEnd) {
 		if match_start {
-			// This doesn't seem to be fully accurate despite notes in the docs about it being the way to monitor game round.
-			// Could look into it but won't provide much value, the round should be used as a key across the different events recorded.
-			game_round++
+
 			var econ_map map[string]interface{}
 			// should probably use this m_unFreezetimeEndEquipmentValue property can then get value / equipment when freeze time ends if can't find a suitable event
 			for _, pl := range p.GameState().Participants().Playing() {
-				// fmt.Printf("%s has %d worth of equipment in round %d\n", pl.Name, pl.EquipmentValueFreezeTimeEnd(), game_round)
+				fmt.Printf("%s has %d worth of equipment in round %d\n", pl.Name, pl.EquipmentValueFreezeTimeEnd(), game_round)
 
 				var items []string
 
 				for _, item := range pl.Weapons() {
-					fmt.Printf("%s has a %s in round %d\n", pl.Name, item.String(), game_round)
+					// fmt.Printf("%s has a %s in round %d\n", pl.Name, item.String(), game_round)
 					items = append(items, item.String())
 				}
+
+				round_start_value_without_defaults := pl.EquipmentValueRoundStart() - 200
+				non_armour_equipment_value := round_start_value_without_defaults - pl.MoneySpentThisRound()
+
+				if pl.Armor() == 100 {
+					non_armour_equipment_value -= 100
+				}
+
 				econ_map = map[string]interface{}{
-					"round":         game_round,
-					"player":        pl.Name,
-					"weapons_value": pl.EquipmentValueFreezeTimeEnd(),
-					"inventory":     items,
-					"team_econ":     pl.TeamState.FreezeTimeEndEquipmentValue(),
-					"team":          pl.TeamState.ClanName(),
-					"team_game_id":  pl.TeamState.ID(),
+					"round":                      game_round,
+					"player":                     pl.Name,
+					"money_spent":                pl.MoneySpentThisRound(),
+					"non_armour_equipment_value": non_armour_equipment_value,
+					"armour":                     pl.Armor(),
+					"helmet":                     pl.HasHelmet(),
+					"net_spend":                  round_start_value_without_defaults - pl.MoneySpentThisRound(),
+					"inventory":                  items, // This won't capture anything left on the ground and then picked up afer freeze time
+					"team_money_spent":           pl.TeamState.MoneySpentThisRound(),
+					"team_total_equipment_value": pl.TeamState.MoneySpentThisRound() + pl.TeamState.RoundStartEquipmentValue(),
+					"team":                       pl.TeamState.ClanName(),
+					"team_game_id":               pl.TeamState.ID(),
 				}
 
 				events_map["economy"] = append(events_map["economy"], econ_map)
 			}
-			// Need to create a list of the maps per round, then append lists to create game
+		}
+	})
 
+	// This doesn't seem to be fully accurate despite notes in the docs about it being the way to monitor game round.
+	// Could look into it but won't provide much value, the round should be used as a key across the different events recorded.
+	p.RegisterEventHandler(func(score events.ScoreUpdated) {
+		if match_start {
+			game_round++
 		}
 	})
 
