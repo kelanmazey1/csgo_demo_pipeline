@@ -101,6 +101,14 @@ def demo_long_staging() -> DataFrame:
 # #e flattened data
 # nades.show()
 
+df_out = spark.createDataFrame
+
+def explode_second_level(second_level);
+    for col in second_level:
+        df.withColumn("new", F.arrays_zip(col)) \
+          .withColumn("new", F.explode("new")) \
+          .select(f"new.{col}").alias(col)
+
 # nades_flat = nades.withColumn("new", F.arrays_zip("grenade", "grenade_position", "grenade_thrower", "grenade_thrower_pos", "grenade_type", "round")) \
 #                   .withColumn("new", F.explode("new")) \
 #                   .select(
