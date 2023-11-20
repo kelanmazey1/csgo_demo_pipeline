@@ -45,8 +45,8 @@ func is_demo_cs2(f *os.File) bool {
 func main() {
 
 	// Should only be passed two args which is path to demo_file, assumes that outfile has '/' at the end
-	demo_path := os.Args[1]   //"/home/kelanmazey/csgo_demo_pipeline/dagster_workflow/demo-pipeline/demos/82330/bravado-vs-goliath-m1-anubis.dem"
-	outpath_arg := os.Args[2] //"./test.json"
+	demo_path := os.Args[1]
+	outpath_arg := os.Args[2]
 
 	var outpath strings.Builder
 

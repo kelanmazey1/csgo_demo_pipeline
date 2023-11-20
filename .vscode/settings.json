@@ -2,5 +2,14 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
-  "python.formatting.provider": "none"
+  "python.formatting.provider": "none",
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "DuckDB",
+      "database": "${workspaceFolder:csgo_demo_pipeline}/dagster_workflow/demo-pipeline/counter_strike.db",
+      "name": "cs"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
 }

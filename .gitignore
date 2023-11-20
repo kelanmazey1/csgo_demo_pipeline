@@ -2,6 +2,11 @@ demo_dump/*
 *.dem
 *.json
 *.parquet
+*.db
+*.db.wal
+*.ipynb
+
+**/chromedriver
 
 secrets/*
 archive/*
@@ -10,16 +15,6 @@ build/*
 __pycache__/
 dagster_workflow/assets/chromedriver
 dagster_workflow/demo-pipeline/data/*
-dagster_workflow/demo-pipeline/dagster-dev/*
-dagster_workflow/demo-pipeline/dagster-dev-venv
 dagster_workflow/demo-pipeline/build/*
-dagster_workflow/demo-pipeline/demo_pipeline/__pycache__/
-dagster_workflow/demo-pipeline/chromedriver
-dagster_workflow/demo-pipeline/demo_pipeline/functions/__pycache__/*
 dagster_workflow/demo-pipeline/demo_pipeline.egg-info/*
-dagster_workflow/demo-pipeline/demo_pipeline.egg-info
-dagster_workflow/demo-pipeline/demo_pipeline/functions/demo_parse/parse_demo
-dagster_workflow/demo-pipeline/data/matches_on_results_page
-dagster_workflow/demo-pipeline/demo_pipeline/assets/core/__pycache__/
 
-dagster_workflow/demo-pipeline/demo_pipeline/assets/__pycache__/__init__.cpython-310.pyc
