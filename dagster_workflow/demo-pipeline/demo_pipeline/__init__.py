@@ -25,7 +25,7 @@ fs_io_manager = FilesystemIOManager(
 
 class LocalParquetIOManager(ConfigurableIOManager):
     def _get_path(self, context):
-        return os.path.join('./demos', *context.asset_key.path)
+        return os.path.join('./data', *context.asset_key.path)
 
     def handle_output(self, context, obj: DataFrame):
         obj.write.parquet(self._get_path(context), mode="overwrite")
